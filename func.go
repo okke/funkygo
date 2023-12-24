@@ -1,25 +1,26 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"reflect"
 )
 
-type Transformer[I any, O any] func(I) (O, error)
-type TransformerWithoutError[I any, O any] func(I) O
-type TransformerWithArguments[I any, O any] func(I, ...any) (O, error)
+type Transformer[I any, O any] func(context.Context, I) (O, error)
+type SimpleTransformer[I any, O any] func(I) O
+type TransformerWithArguments[I any, O any] func(context.Context, I, ...any) (O, error)
 
-func T[I, O any](t TransformerWithoutError[I, O]) Transformer[I, O] {
-	return func(i I) (O, error) {
+func T[I, O any](t SimpleTransformer[I, O]) Transformer[I, O] {
+	return func(ctx context.Context, i I) (O, error) {
 		return t(i), nil
 	}
 }
 
-func Pipe[I any, O any](initial I, steps ...Transformer[any, any]) (O, error) {
+func Pipe[I any, O any](ctx context.Context, initial I, steps ...Transformer[any, any]) (O, error) {
 
 	var result any = initial
 	for _, step := range steps {
-		stepResult, err := step(result)
+		stepResult, err := step(ctx, result)
 		if err != nil {
 			return *new(O), err
 		}
@@ -30,11 +31,12 @@ func Pipe[I any, O any](initial I, steps ...Transformer[any, any]) (O, error) {
 
 func IntoF[I any, O any](t Transformer[I, O]) Transformer[any, any] {
 
-	return func(x any) (any, error) {
+	return func(ctx context.Context, x any) (any, error) {
 
 		functionValue := reflect.ValueOf(t)
 
 		return result2TransformerResult[O](functionValue.Call([]reflect.Value{
+			reflect.ValueOf(ctx),
 			reflect.ValueOf(x),
 		}))
 
@@ -55,7 +57,7 @@ func IntoAnyF[I any, O any](transformerFunc any, arguments ...any) Transformer[a
 }
 
 func createTransformerWithArguments[I, O any](f any) TransformerWithArguments[I, O] {
-	return func(i I, arguments ...any) (O, error) {
+	return func(ctx context.Context, i I, arguments ...any) (O, error) {
 		functionValue := reflect.ValueOf(f)
 
 		// Check if the variable is a function
@@ -67,14 +69,14 @@ func createTransformerWithArguments[I, O any](f any) TransformerWithArguments[I,
 			return reflect.ValueOf(x)
 		}))
 
-		allArgs := append([]reflect.Value{reflect.ValueOf(i)}, args...)
+		allArgs := append([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(i)}, args...)
 
 		return result2TransformerResult[O](functionValue.Call(allArgs))
 	}
 }
 
 func curryOutTransformerArguments[I, O any](f TransformerWithArguments[I, O], p ...any) Transformer[I, O] {
-	return func(i I) (O, error) {
-		return f(i, p...)
+	return func(ctx context.Context, i I) (O, error) {
+		return f(ctx, i, p...)
 	}
 }
