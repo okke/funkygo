@@ -10,6 +10,8 @@ type Transformer[I any, O any] func(context.Context, I) (O, error)
 type SimpleTransformer[I any, O any] func(I) O
 type TransformerWithArguments[I any, O any] func(context.Context, I, ...any) (O, error)
 
+var _CONTEXT_TYPE = reflect.TypeOf((*context.Context)(nil)).Elem()
+
 func T[I, O any](t SimpleTransformer[I, O]) Transformer[I, O] {
 	return func(ctx context.Context, i I) (O, error) {
 		return t(i), nil
@@ -69,7 +71,13 @@ func createTransformerWithArguments[I, O any](f any) TransformerWithArguments[I,
 			return reflect.ValueOf(x)
 		}))
 
-		allArgs := append([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(i)}, args...)
+		allArgs := append([]reflect.Value{reflect.ValueOf(i)}, args...)
+
+		// prepend the context if the transformer function accepts it
+		//
+		if functionValue.Type().NumIn() > 0 && functionValue.Type().In(0) == _CONTEXT_TYPE {
+			allArgs = append([]reflect.Value{reflect.ValueOf(ctx)}, allArgs...)
+		}
 
 		return result2TransformerResult[O](functionValue.Call(allArgs))
 	}
