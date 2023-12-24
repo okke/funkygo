@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestPipe(t *testing.T) {
 
@@ -8,12 +11,67 @@ func TestPipe(t *testing.T) {
 
 	// apply := T[int, int](func(x int) int { return x + 1 })
 	// output := Compose[int, int](input, apply)
-	output := Pipe[int, int](input,
-		IntoF(func(x int) float64 { return float64(x) + 1 }),
-		IntoF(func(x float64) int { return int(x) + 1 }))
+	output, err := Pipe[int, int](input,
+		IntoF(T(func(x int) float64 { return float64(x) + 1 })),
+		IntoF(T(func(x float64) int { return int(x) + 1 })),
+	)
+
+	if err != nil {
+		t.Errorf("Expected nil, got %v", err)
+	}
 
 	if output != 5 {
 		t.Errorf("Expected 4, got %d", output)
+	}
+
+}
+
+func TestPipeWithError(t *testing.T) {
+
+	input := 42
+
+	output, err := Pipe[int, int](input,
+		IntoF(T(func(x int) float64 { return float64(x) + 1 })),
+		//IntoF(func(f float64) (float64, error) { return 0, errors.New("oh no") }),
+		IntoAnyF[float64, float64](func(f float64) (float64, error) { return 0, errors.New("oh no") }),
+		IntoF(T(func(x float64) int { return int(x) + 1 })),
+	)
+
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	// output should be default value of an int which is 0
+	//
+	if output != 0 {
+		t.Errorf("Expected 0, got %d", output)
+	}
+}
+
+func TestPipeWithWrongTransformer(t *testing.T) {
+	input := 33
+
+	_, err := Pipe[int, int](input,
+		IntoAnyF[int, int](0),
+	)
+
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+}
+
+func TestPipeWithNoResults(t *testing.T) {
+	input := 33
+
+	output, err := Pipe[int, int](input,
+		IntoAnyF[int, int](func(x int) {}), // do nothing, return nothing
+	)
+	if err != nil {
+		t.Errorf("Expected nil, got %v", err)
+	}
+	if output != 0 {
+		t.Errorf("Expected 0, got %d", output)
 	}
 
 }
@@ -22,28 +80,26 @@ func TestPipe2(t *testing.T) {
 
 	input := []int{1, 2, 3, 4}
 
-	// f := C1(sliceFilter, func(x int) bool { return x%2 == 0 })
-	f := CurryOutTransformerArguments(CreateTransformerWithArguments[[]int, []int](sliceFilter[int]), func(x int) bool { return x%2 == 0 })
+	adder := func(in []int) []int {
+		out := []int{}
+		for _, x := range in {
+			out = append(out, x+1)
+		}
+		return out
+	}
 
-	output := Pipe[[]int, []int](
+	output, err := Pipe[[]int, []int](
 		input,
-		IntoF(f),
+		IntoF(T(adder)),
 		IntoAnyF[[]int, []int](sliceFilter[int], func(x int) bool { return x%2 == 0 }),
 	)
+	if err != nil {
+		t.Errorf("Expected nil, got %v", err)
+	}
 
 	if len(output) != 2 {
 		t.Errorf("Expected 2, got %d", len(output))
 	}
-}
-
-func C1[I, O, A any](f func(I, A) O, p A) Transformer[I, O] {
-	return func(i I) O {
-		return f(i, p)
-	}
-}
-
-func CP1[I, O, A any](f func(I, A) O, p A) Transformer[any, any] {
-	return IntoF(C1[I, O, A](f, p))
 }
 
 func sliceFilter[T any](s []T, f func(T) bool) []T {

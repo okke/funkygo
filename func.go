@@ -1,67 +1,80 @@
 package main
 
-import "reflect"
+import (
+	"errors"
+	"reflect"
+)
 
-type Transformer[I any, O any] func(I) O
-type TransformerWithArguments[I any, O any] func(I, ...any) O
+type Transformer[I any, O any] func(I) (O, error)
+type TransformerWithoutError[I any, O any] func(I) O
+type TransformerWithArguments[I any, O any] func(I, ...any) (O, error)
 
-func Pipe[I any, O any](initial I, steps ...Transformer[any, any]) O {
+func T[I, O any](t TransformerWithoutError[I, O]) Transformer[I, O] {
+	return func(i I) (O, error) {
+		return t(i), nil
+	}
+}
+
+func Pipe[I any, O any](initial I, steps ...Transformer[any, any]) (O, error) {
 
 	var result any = initial
 	for _, step := range steps {
-		result = step(result)
+		stepResult, err := step(result)
+		if err != nil {
+			return *new(O), err
+		}
+		result = stepResult
 	}
-	return result.(O)
+	return result.(O), nil
 }
 
 func IntoF[I any, O any](t Transformer[I, O]) Transformer[any, any] {
 
-	return func(x any) any {
+	return func(x any) (any, error) {
 
 		functionValue := reflect.ValueOf(t)
 
-		// Check if the variable is a function
-		if functionValue.Kind() == reflect.Func {
-			// Prepare arguments for the function
-			args := []reflect.Value{
-				reflect.ValueOf(x),
-			}
+		return result2TransformerResult[O](functionValue.Call([]reflect.Value{
+			reflect.ValueOf(x),
+		}))
 
-			// Call the function with arguments
-			result := functionValue.Call(args)
-			return result[0].Interface().(O)
-		}
-
-		panic("Value is not a function")
 	}
 }
 
-func IntoAnyF[I any, O any](transformerFunc any, arguments ...any) Transformer[any, any] {
-	return IntoF(CurryOutTransformerArguments(CreateTransformerWithArguments[I, O](transformerFunc), arguments...))
+func result2TransformerResult[O any](result []reflect.Value) (O, error) {
+	if len(result) == 0 {
+		return *new(O), nil
+	} else if len(result) == 2 && !result[1].IsNil() {
+		return result[0].Interface().(O), result[1].Interface().(error)
+	}
+	return result[0].Interface().(O), nil
 }
 
-func CreateTransformerWithArguments[I, O any](f any) TransformerWithArguments[I, O] {
-	return func(i I, arguments ...any) O {
+func IntoAnyF[I any, O any](transformerFunc any, arguments ...any) Transformer[any, any] {
+	return IntoF(curryOutTransformerArguments(createTransformerWithArguments[I, O](transformerFunc), arguments...))
+}
+
+func createTransformerWithArguments[I, O any](f any) TransformerWithArguments[I, O] {
+	return func(i I, arguments ...any) (O, error) {
 		functionValue := reflect.ValueOf(f)
 
 		// Check if the variable is a function
 		if functionValue.Kind() != reflect.Func {
-			panic("Value is not a function")
+			return *new(O), errors.New("transformer is not a function")
 		}
-		args := SliceMap(arguments, func(x any) reflect.Value {
+
+		args, _ := SliceMap(arguments, T(func(x any) reflect.Value {
 			return reflect.ValueOf(x)
-		})
+		}))
 
 		allArgs := append([]reflect.Value{reflect.ValueOf(i)}, args...)
 
-		// Call the function with arguments
-		result := functionValue.Call(allArgs)
-		return result[0].Interface().(O)
+		return result2TransformerResult[O](functionValue.Call(allArgs))
 	}
 }
 
-func CurryOutTransformerArguments[I, O any](f TransformerWithArguments[I, O], p ...any) Transformer[I, O] {
-	return func(i I) O {
+func curryOutTransformerArguments[I, O any](f TransformerWithArguments[I, O], p ...any) Transformer[I, O] {
+	return func(i I) (O, error) {
 		return f(i, p...)
 	}
 }
