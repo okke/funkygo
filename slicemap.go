@@ -1,9 +1,13 @@
 package main
 
-func SliceMap[I any, O any](s []I, f Transformer[I, O]) []O {
+func SliceMap[I any, O any](s []I, f Transformer[I, O]) ([]O, error) {
 	result := []O{}
 	for _, x := range s {
-		result = append(result, f(x))
+		transformed, err := f(x)
+		if err != nil {
+			return result, err
+		}
+		result = append(result, transformed)
 	}
-	return result
+	return result, nil
 }
