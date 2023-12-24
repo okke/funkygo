@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -10,11 +11,19 @@ type Transformer[I any, O any] func(context.Context, I) (O, error)
 type SimpleTransformer[I any, O any] func(I) O
 type TransformerWithArguments[I any, O any] func(context.Context, I, ...any) (O, error)
 
+type BoundValue[O any] func() (string, O)
+
 var _CONTEXT_TYPE = reflect.TypeOf((*context.Context)(nil)).Elem()
 
 func T[I, O any](t SimpleTransformer[I, O]) Transformer[I, O] {
 	return func(ctx context.Context, i I) (O, error) {
 		return t(i), nil
+	}
+}
+
+func bind[O any](name string, value O) BoundValue[O] {
+	return func() (string, O) {
+		return name, value
 	}
 }
 
@@ -26,9 +35,32 @@ func Pipe[I any, O any](ctx context.Context, initial I, steps ...Transformer[any
 		if err != nil {
 			return *new(O), err
 		}
-		result = stepResult
+
+		ctx, result = bindIntoContext(ctx, stepResult)
 	}
 	return result.(O), nil
+}
+
+func bindIntoContext(ctx context.Context, value any) (context.Context, any) {
+
+	functionValue := reflect.ValueOf(value)
+	if functionValue.Kind() != reflect.Func {
+		return ctx, value
+	}
+
+	if functionValue.Type().NumIn() != 0 {
+		return ctx, value
+	}
+
+	if functionValue.Type().NumOut() != 2 {
+		return ctx, value
+	}
+
+	result := functionValue.Call([]reflect.Value{})
+	name := fmt.Sprintf("%s", result[0].Interface())
+	actualValue := result[1].Interface()
+
+	return context.WithValue(ctx, name, actualValue), actualValue
 }
 
 func IntoF[I any, O any](t Transformer[I, O]) Transformer[any, any] {
@@ -42,6 +74,18 @@ func IntoF[I any, O any](t Transformer[I, O]) Transformer[any, any] {
 			reflect.ValueOf(x),
 		}))
 
+	}
+}
+
+func Bind[I any, O any](name string, t Transformer[I, O]) Transformer[any, any] {
+
+	apply := IntoF(t)
+	return func(ctx context.Context, x any) (any, error) {
+		result, err := apply(ctx, x)
+		if err != nil {
+			return *new(O), err
+		}
+		return bind[O](name, result.(O)), nil
 	}
 }
 
