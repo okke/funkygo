@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"testing"
 )
@@ -11,7 +12,7 @@ func TestPipe(t *testing.T) {
 
 	// apply := T[int, int](func(x int) int { return x + 1 })
 	// output := Compose[int, int](input, apply)
-	output, err := Pipe[int, int](input,
+	output, err := Pipe[int, int](context.TODO(), input,
 		IntoF(T(func(x int) float64 { return float64(x) + 1 })),
 		IntoF(T(func(x float64) int { return int(x) + 1 })),
 	)
@@ -30,10 +31,10 @@ func TestPipeWithError(t *testing.T) {
 
 	input := 42
 
-	output, err := Pipe[int, int](input,
+	output, err := Pipe[int, int](context.TODO(), input,
 		IntoF(T(func(x int) float64 { return float64(x) + 1 })),
 		//IntoF(func(f float64) (float64, error) { return 0, errors.New("oh no") }),
-		IntoAnyF[float64, float64](func(f float64) (float64, error) { return 0, errors.New("oh no") }),
+		IntoAnyF[float64, float64](func(ctx context.Context, f float64) (float64, error) { return 0, errors.New("oh no") }),
 		IntoF(T(func(x float64) int { return int(x) + 1 })),
 	)
 
@@ -51,7 +52,7 @@ func TestPipeWithError(t *testing.T) {
 func TestPipeWithWrongTransformer(t *testing.T) {
 	input := 33
 
-	_, err := Pipe[int, int](input,
+	_, err := Pipe[int, int](context.TODO(), input,
 		IntoAnyF[int, int](0),
 	)
 
@@ -64,8 +65,8 @@ func TestPipeWithWrongTransformer(t *testing.T) {
 func TestPipeWithNoResults(t *testing.T) {
 	input := 33
 
-	output, err := Pipe[int, int](input,
-		IntoAnyF[int, int](func(x int) {}), // do nothing, return nothing
+	output, err := Pipe[int, int](context.TODO(), input,
+		IntoAnyF[int, int](func(ctx context.Context, x int) {}), // do nothing, return nothing
 	)
 	if err != nil {
 		t.Errorf("Expected nil, got %v", err)
@@ -89,7 +90,7 @@ func TestPipe2(t *testing.T) {
 	}
 
 	output, err := Pipe[[]int, []int](
-		input,
+		context.TODO(), input,
 		IntoF(T(adder)),
 		IntoAnyF[[]int, []int](sliceFilter[int], func(x int) bool { return x%2 == 0 }),
 	)
@@ -102,7 +103,7 @@ func TestPipe2(t *testing.T) {
 	}
 }
 
-func sliceFilter[T any](s []T, f func(T) bool) []T {
+func sliceFilter[T any](ctx context.Context, s []T, f func(T) bool) []T {
 
 	result := []T{}
 
