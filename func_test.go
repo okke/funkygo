@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 )
 
@@ -102,6 +103,29 @@ func TestPipe2(t *testing.T) {
 	if len(output) != 1 {
 		t.Errorf("Expected 2, got %d", len(output))
 	}
+}
+
+func TestBind(t *testing.T) {
+
+	input := 42
+
+	output, err := Pipe[int, string](context.TODO(), input,
+		Bind("Step1", T(func(x int) int { return x + 1 })),
+		Bind("Step2", T(func(x int) int { return x * 2 })),
+		Bind("Step3", T(func(x int) int { return x - 1 })),
+		IntoF(func(ctx context.Context, x int) (string, error) {
+			return fmt.Sprintf("%d-%d-%d", ctx.Value("Step1"), ctx.Value("Step2"), ctx.Value("Step3")), nil
+		}),
+	)
+
+	if err != nil {
+		t.Errorf("Expected nil, got %v", err)
+	}
+
+	if output != "43-86-85" {
+		t.Errorf("Expected \"43-86-85\", got %s", output)
+	}
+
 }
 
 func sliceFilter[T any](ctx context.Context, s []T, f func(T) bool) []T {
