@@ -91,19 +91,33 @@ func TestPipe2(t *testing.T) {
 
 	output, err := Pipe[[]int, []int](
 		context.TODO(), input,
+		IntoAnyF[[]int, []int](sliceFilter[int], func(x int) bool { return x%3 == 0 }),
 		IntoF(T(adder)),
-		IntoAnyF[[]int, []int](sliceFilter[int], func(x int) bool { return x%2 == 0 }),
+		IntoAnyF[[]int, []int](sliceFilterWithoutContext[int], func(x int) bool { return x%2 == 0 }),
 	)
 	if err != nil {
 		t.Errorf("Expected nil, got %v", err)
 	}
 
-	if len(output) != 2 {
+	if len(output) != 1 {
 		t.Errorf("Expected 2, got %d", len(output))
 	}
 }
 
 func sliceFilter[T any](ctx context.Context, s []T, f func(T) bool) []T {
+
+	result := []T{}
+
+	for _, x := range s {
+		if f(x) {
+			result = append(result, x)
+		}
+	}
+
+	return result
+}
+
+func sliceFilterWithoutContext[T any](s []T, f func(T) bool) []T {
 
 	result := []T{}
 
