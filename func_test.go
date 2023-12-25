@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -124,6 +125,34 @@ func TestBind(t *testing.T) {
 
 	if output != "43-86-85" {
 		t.Errorf("Expected \"43-86-85\", got %s", output)
+	}
+
+}
+
+func TestAs(t *testing.T) {
+
+	type Recipe struct {
+		Name       string
+		Difficulty int
+	}
+
+	input := "soup"
+
+	output, err := Pipe[string, *Recipe](context.TODO(), input,
+		Bind("Name", T(func(s string) string { return strings.ToUpper(s) })),
+		Bind("Difficulty", T(func(s string) int { return len(s) })),
+		As(&Recipe{}),
+	)
+
+	if err != nil {
+		t.Errorf("Expected nil, got %v", err)
+	}
+
+	if output.Name != "SOUP" {
+		t.Errorf("Expected \"SOUP\", got %s", output.Name)
+	}
+	if output.Difficulty != 4 {
+		t.Errorf("Expected 4, got %d", output.Difficulty)
 	}
 
 }
