@@ -15,6 +15,8 @@ type BoundValue[O any] func() (string, O)
 
 var _CONTEXT_TYPE = reflect.TypeOf((*context.Context)(nil)).Elem()
 
+var _CONTEXT_KEYS struct{} = struct{}{}
+
 func T[I, O any](t SimpleTransformer[I, O]) Transformer[I, O] {
 	return func(ctx context.Context, i I) (O, error) {
 		return t(i), nil
@@ -56,8 +58,6 @@ func bindIntoContext(ctx context.Context, value any) (context.Context, any) {
 		return ctx, value
 	}
 
-	// check if the first returned value is a string
-	//
 	if functionValue.Type().Out(0).Kind() != reflect.String {
 		return ctx, value
 	}
@@ -66,6 +66,17 @@ func bindIntoContext(ctx context.Context, value any) (context.Context, any) {
 	name := fmt.Sprintf("%s", result[0].Interface())
 	actualValue := result[1].Interface()
 
+	// store values in own mapping for later usage
+	//
+	mapping := ctx.Value(_CONTEXT_KEYS)
+	if mapping == nil {
+		mapping = map[string]any{}
+		ctx = context.WithValue(ctx, _CONTEXT_KEYS, mapping)
+	}
+	mapping.(map[string]any)[name] = actualValue
+
+	// and store them in context as well
+	//
 	return context.WithValue(ctx, name, actualValue), actualValue
 }
 
@@ -92,6 +103,19 @@ func Bind[I any, O any](name string, t Transformer[I, O]) Transformer[any, any] 
 			return *new(O), err
 		}
 		return bind[O](name, result.(O)), nil
+	}
+}
+
+func As[O any](into O) Transformer[any, any] {
+
+	return func(ctx context.Context, x any) (any, error) {
+
+		mapping := ctx.Value(_CONTEXT_KEYS)
+		if mapping == nil {
+			return into, nil
+		}
+
+		return map2struct(mapping.(map[string]any), into)
 	}
 }
 
