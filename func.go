@@ -56,6 +56,12 @@ func bindIntoContext(ctx context.Context, value any) (context.Context, any) {
 		return ctx, value
 	}
 
+	// check if the first returned value is a string
+	//
+	if functionValue.Type().Out(0).Kind() != reflect.String {
+		return ctx, value
+	}
+
 	result := functionValue.Call([]reflect.Value{})
 	name := fmt.Sprintf("%s", result[0].Interface())
 	actualValue := result[1].Interface()
