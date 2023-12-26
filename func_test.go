@@ -185,6 +185,33 @@ func TestAs(t *testing.T) {
 
 }
 
+func TestDemux(t *testing.T) {
+
+	input := 42
+
+	output, err := Demux[int, int](context.TODO(), input,
+		IntoF(T(func(x int) int { return x + 1 })),
+		IntoF(T(func(x int) int { return x * 2 })),
+		IntoF(T(func(x int) int { return x / 2 })),
+	)
+
+	if err != nil {
+		t.Errorf("Expected nil, got %v", err)
+	}
+
+	if output[0] != 43 {
+		t.Errorf("Expected 43, got %d", output[0])
+	}
+
+	if output[1] != 84 {
+		t.Errorf("Expected 86, got %d", output[1])
+	}
+
+	if output[2] != 21 {
+		t.Errorf("Expected 21, got %d", output[2])
+	}
+}
+
 func sliceFilter[T any](ctx context.Context, s []T, f func(T) bool) []T {
 
 	result := []T{}

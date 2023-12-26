@@ -55,6 +55,18 @@ func Pipe[I any, O any](ctx context.Context, initial I, steps ...Transformer[any
 	return result.(O), nil
 }
 
+func Demux[I any, O any](ctx context.Context, initial I, steps ...Transformer[any, any]) ([]O, error) {
+	results := []O{}
+	for _, step := range steps {
+		stepResult, err := step(ctx, initial)
+		if err != nil {
+			return results, err
+		}
+		results = append(results, stepResult.(O))
+	}
+	return results, nil
+}
+
 func bindIntoContext(ctx context.Context, value any) (context.Context, any) {
 
 	functionValue := reflect.ValueOf(value)
