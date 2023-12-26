@@ -129,6 +129,34 @@ func TestBind(t *testing.T) {
 
 }
 
+func TestPromiseShouldBeMemoized(t *testing.T) {
+
+	input := 42
+
+	output, err := Pipe[int, int](context.TODO(), input,
+		IntoF(Promise(T(func(x int) int { return x + 1 }))),
+		IntoF[PromisedValue[int], PromisedValue[int]](T(func(x PromisedValue[int]) PromisedValue[int] {
+			actualX, _ := x()
+			t.Log(actualX)
+			return x
+		})),
+		IntoF[PromisedValue[int], int](T(func(x PromisedValue[int]) int {
+			actualX, _ := x()
+			t.Log(actualX)
+			return actualX
+		})),
+	)
+
+	if err != nil {
+		t.Errorf("Expected nil, got %v", err)
+	}
+
+	if output != 43 {
+		t.Errorf("Expected 43, got %d", output)
+	}
+
+}
+
 func TestAs(t *testing.T) {
 
 	type Recipe struct {
