@@ -140,7 +140,7 @@ func TestAs(t *testing.T) {
 
 	output, err := Pipe[string, *Recipe](context.TODO(), input,
 		Bind("Name", T(strings.ToUpper)),
-		Bind("Difficulty", T(func(s string) int { return len(s) })),
+		Bind("Difficulty", Promise(T(func(s string) int { return len(s) }))),
 		As(&Recipe{}),
 	)
 

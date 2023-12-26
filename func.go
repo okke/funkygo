@@ -11,6 +11,7 @@ type Transformer[I any, O any] func(context.Context, I) (O, error)
 type SimpleTransformer[I any, O any] func(I) O
 type TransformerWithArguments[I any, O any] func(context.Context, I, ...any) (O, error)
 
+type PromisedValue[O any] func() (O, error)
 type BoundValue[O any] func() (string, O)
 
 var _CONTEXT_TYPE = reflect.TypeOf((*context.Context)(nil)).Elem()
@@ -23,9 +24,20 @@ func T[I, O any](t SimpleTransformer[I, O]) Transformer[I, O] {
 	}
 }
 
-func bind[O any](name string, value O) BoundValue[O] {
-	return func() (string, O) {
-		return name, value
+func Promise[I, O any](t Transformer[I, O]) Transformer[I, PromisedValue[O]] {
+
+	return func(ctx context.Context, i I) (PromisedValue[O], error) {
+		channel := make(chan PromisedValue[O], 1)
+		go func() {
+			result, err := t(ctx, i)
+			channel <- func() (O, error) {
+				return result, err
+			}
+		}()
+		return func() (O, error) {
+			result := <-channel
+			return result()
+		}, nil
 	}
 }
 
@@ -106,6 +118,12 @@ func Bind[I any, O any](name string, t Transformer[I, O]) Transformer[any, any] 
 	}
 }
 
+func bind[O any](name string, value O) BoundValue[O] {
+	return func() (string, O) {
+		return name, value
+	}
+}
+
 func As[O any](into O) Transformer[any, any] {
 
 	return func(ctx context.Context, x any) (any, error) {
@@ -113,6 +131,19 @@ func As[O any](into O) Transformer[any, any] {
 		mapping := ctx.Value(_CONTEXT_KEYS)
 		if mapping == nil {
 			return into, nil
+		}
+
+		for key, value := range mapping.(map[string]any) {
+
+			// if value is a function, call it and store the result in the mapping
+			//
+			if reflect.TypeOf(value).Kind() == reflect.Func {
+
+				functionValue := reflect.ValueOf(value)
+				functionResult := functionValue.Call([]reflect.Value{})
+
+				mapping.(map[string]any)[key] = functionResult[0].Interface()
+			}
 		}
 
 		return map2struct(mapping.(map[string]any), into)
