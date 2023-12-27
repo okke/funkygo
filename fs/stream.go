@@ -63,6 +63,31 @@ func Map[I, O any](stream Stream[I], mapper func(I) (O, error)) Stream[O] {
 	}
 }
 
+func Reduce[T any](stream Stream[T], reducer func(T, T) T) T {
+
+	result, next := stream()
+	if next == nil {
+		return result
+	}
+
+	for value, next := next(); next != nil; value, next = next() {
+		result = reducer(result, value)
+	}
+
+	return result
+}
+
+func ReduceInto[I, O any](stream Stream[I], initial O, reducer func(O, I) O) O {
+
+	result := initial
+
+	for value, next := stream(); next != nil; value, next = next() {
+		result = reducer(result, value)
+	}
+
+	return result
+}
+
 func ToSet[T comparable](stream Stream[T]) fu.Set[T] {
 	set := make(fu.Set[T])
 
