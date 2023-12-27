@@ -12,8 +12,6 @@ func TestPipe(t *testing.T) {
 
 	input := 3
 
-	// apply := T[int, int](func(x int) int { return x + 1 })
-	// output := Compose[int, int](input, apply)
 	output, err := Pipe[int, int](context.TODO(), input,
 		IntoF(T(func(x int) float64 { return float64(x) + 1 })),
 		IntoF(T(func(x float64) int { return int(x) + 1 })),
@@ -35,7 +33,6 @@ func TestPipeWithError(t *testing.T) {
 
 	output, err := Pipe[int, int](context.TODO(), input,
 		IntoF(T(func(x int) float64 { return float64(x) + 1 })),
-		//IntoF(func(f float64) (float64, error) { return 0, errors.New("oh no") }),
 		IntoAnyF[float64, float64](func(ctx context.Context, f float64) (float64, error) { return 0, errors.New("oh no") }),
 		IntoF(T(func(x float64) int { return int(x) + 1 })),
 	)
@@ -79,7 +76,7 @@ func TestPipeWithNoResults(t *testing.T) {
 
 }
 
-func TestPipe2(t *testing.T) {
+func TestPipeWithArgs(t *testing.T) {
 
 	input := []int{1, 2, 3, 4}
 
@@ -132,17 +129,19 @@ func TestBind(t *testing.T) {
 func TestPromiseShouldBeMemoized(t *testing.T) {
 
 	input := 42
+	firstX := 0
+	secondX := 0
 
 	output, err := Pipe[int, int](context.TODO(), input,
 		IntoF(Promise(T(func(x int) int { return x + 1 }))),
 		IntoF[PromisedValue[int], PromisedValue[int]](T(func(x PromisedValue[int]) PromisedValue[int] {
 			actualX, _ := x()
-			t.Log(actualX)
+			firstX = actualX
 			return x
 		})),
 		IntoF[PromisedValue[int], int](T(func(x PromisedValue[int]) int {
 			actualX, _ := x()
-			t.Log(actualX)
+			secondX = actualX
 			return actualX
 		})),
 	)
@@ -153,6 +152,14 @@ func TestPromiseShouldBeMemoized(t *testing.T) {
 
 	if output != 43 {
 		t.Errorf("Expected 43, got %d", output)
+	}
+
+	if firstX != 43 {
+		t.Errorf("Expected 43, got %d", firstX)
+	}
+
+	if secondX != 43 {
+		t.Errorf("Expected 43, got %d", secondX)
 	}
 
 }
