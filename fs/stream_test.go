@@ -79,6 +79,26 @@ func TestFilter(t *testing.T) {
 	}
 }
 
+func TestMatchFirst(t *testing.T) {
+
+	if matched, rest := MatchFirst(FromSlice([]int{1, 2, 3}), 1, 2, 3); !matched {
+		t.Errorf("Expected 1, 2 and 3, got %v", rest)
+	}
+
+	if matched, rest := MatchFirst(FromSlice([]int{1, 2, 3}), 5); matched {
+		t.Errorf("Did not expect 5, got %v", rest)
+	}
+}
+
+func TestDistinct(t *testing.T) {
+
+	distinct := Distinct(FromSlice([]int{1, 2, 2, 1, 3}))
+	if matched, _ := MatchFirst(distinct, 1, 2, 3); !matched {
+		t.Errorf("Expected 1, 2 and 3, got %v", distinct)
+	}
+
+}
+
 func TestMap(t *testing.T) {
 
 	stream := Map(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) (int, error) {
