@@ -14,6 +14,15 @@ func FromSlice[T any](slice []T) Stream[T] {
 	}
 }
 
+func ToSlice[T any](stream Stream[T]) []T {
+
+	result := []T{}
+	for e, s := stream(); s != nil; e, s = s() {
+		result = append(result, e)
+	}
+	return result
+}
+
 func Each[T any](stream Stream[T], callback func(T) error) error {
 
 	for e, s := stream(); s != nil; e, s = s() {
