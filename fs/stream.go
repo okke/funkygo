@@ -58,6 +58,33 @@ func Filter[T any](stream Stream[T], filter func(T) bool) Stream[T] {
 	}
 }
 
+func Distinct[T comparable](stream Stream[T]) Stream[T] {
+
+	set := fu.Set[T]{}
+
+	return Filter(stream, func(x T) bool {
+
+		if set.Contains(x) {
+			return false
+		}
+		set.Add(x)
+		return true
+	})
+
+}
+
+func MatchFirst[T comparable](stream Stream[T], values ...T) (bool, Stream[T]) {
+
+	var found T
+	next := stream
+	for _, value := range values {
+		if found, next = next(); found != value {
+			return false, stream
+		}
+	}
+	return true, next
+}
+
 func Map[I, O any](stream Stream[I], mapper func(I) (O, error)) Stream[O] {
 
 	return func() (O, Stream[O]) {
@@ -111,13 +138,9 @@ func FindFirst[T any](stream Stream[T], predicate func(T) bool) (T, Stream[T]) {
 func ToSet[T comparable](stream Stream[T]) fu.Set[T] {
 	set := make(fu.Set[T])
 
-	for {
-		value, next := stream()
-		if next == nil {
-			return set
-		}
+	for value, next := stream(); next != nil; value, next = next() {
 		set = set.Add(value)
-		stream = next
 	}
 
+	return set
 }
