@@ -48,14 +48,18 @@ func Filter[T any](stream Stream[T], filter func(T) bool) Stream[T] {
 	}
 }
 
-func Map[I, O any](stream Stream[I], mapper func(I) O) Stream[O] {
+func Map[I, O any](stream Stream[I], mapper func(I) (O, error)) Stream[O] {
 
 	return func() (O, Stream[O]) {
 		value, next := stream()
 		if next == nil {
 			return fu.Zero[O](), nil
 		}
-		return mapper(value), Map(next, mapper)
+		if mapped, err := mapper(value); err != nil {
+			return fu.Zero[O](), nil
+		} else {
+			return mapped, Map(next, mapper)
+		}
 	}
 }
 

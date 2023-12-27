@@ -58,15 +58,11 @@ func Pipe[I any, O any](ctx context.Context, initial I, steps ...Transformer[any
 }
 
 func Demux[I any, O any](ctx context.Context, initial I, steps ...Transformer[any, any]) ([]O, error) {
-	results := []O{}
-	for _, step := range steps {
-		stepResult, err := step(ctx, initial)
-		if err != nil {
-			return results, err
-		}
-		results = append(results, stepResult.(O))
-	}
-	return results, nil
+
+	return fs.ToSlice(fs.Map(fs.FromSlice(steps), func(t Transformer[any, any]) (O, error) {
+		result, err := t(ctx, initial)
+		return result.(O), err
+	})), nil
 }
 
 func bindIntoContext(ctx context.Context, value any) (context.Context, any) {
@@ -186,8 +182,8 @@ func createTransformerWithArguments[I, O any](f any) TransformerWithArguments[I,
 			return fu.Zero[O](), errors.New("transformer is not a function")
 		}
 
-		args := fs.ToSlice(fs.Map(fs.FromSlice(arguments), func(argValue any) reflect.Value {
-			return reflect.ValueOf(argValue)
+		args := fs.ToSlice(fs.Map(fs.FromSlice(arguments), func(argValue any) (reflect.Value, error) {
+			return reflect.ValueOf(argValue), nil
 		}))
 
 		allArgs := append([]reflect.Value{reflect.ValueOf(i)}, args...)
