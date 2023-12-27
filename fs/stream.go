@@ -16,16 +16,12 @@ func FromSlice[T any](slice []T) Stream[T] {
 
 func Each[T any](stream Stream[T], callback func(T) error) error {
 
-	for {
-		value, next := stream()
-		if next == nil {
-			return nil
-		}
-		if err := callback(value); err != nil {
+	for e, s := stream(); s != nil; e, s = s() {
+		if err := callback(e); err != nil {
 			return err
 		}
-		stream = next
 	}
+	return nil
 }
 
 func Filter[T any](stream Stream[T], filter func(T) bool) Stream[T] {

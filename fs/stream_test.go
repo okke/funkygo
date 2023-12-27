@@ -1,10 +1,36 @@
 package fs
 
 import (
+	"errors"
 	"math"
 	"math/rand"
 	"testing"
 )
+
+func TestEach(t *testing.T) {
+
+	count := 0
+	Each(FromSlice([]int{}), func(x int) error {
+		count += x
+		return nil
+	})
+	if count != 0 {
+		t.Errorf("Expected 0, got %d", count)
+	}
+
+	Each(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) error {
+		count += x
+		if x == 3 {
+			return errors.New("oh no")
+		}
+		return nil
+	})
+
+	if count != 6 {
+		t.Errorf("Expected 15, got %d", count)
+	}
+
+}
 
 func TestFilter(t *testing.T) {
 
@@ -20,6 +46,19 @@ func TestFilter(t *testing.T) {
 
 	if !set.ContainsNone(1, 3, 5) {
 		t.Errorf("Expected none of 1, 3 and 5, got %v", set)
+	}
+}
+
+func TestMap(t *testing.T) {
+
+	stream := Map(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) int {
+		return x * 2
+	})
+
+	set := ToSet(stream)
+
+	if !set.ContainsAll(2, 4, 6, 8, 10) {
+		t.Errorf("Expected 2, 4, 6, 8 and 10, got %v", set)
 	}
 }
 
@@ -51,18 +90,5 @@ func BenchmarkFilter(b *testing.B) {
 		})
 
 		b.Log("set with length", count)
-	}
-}
-
-func TestMap(t *testing.T) {
-
-	stream := Map(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) int {
-		return x * 2
-	})
-
-	set := ToSet(stream)
-
-	if !set.ContainsAll(2, 4, 6, 8, 10) {
-		t.Errorf("Expected 2, 4, 6, 8 and 10, got %v", set)
 	}
 }
