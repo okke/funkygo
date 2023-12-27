@@ -57,12 +57,12 @@ func Pipe[I any, O any](ctx context.Context, initial I, steps ...Transformer[any
 	return result.(O), nil
 }
 
-func Demux[I any, O any](ctx context.Context, initial I, steps ...Transformer[any, any]) ([]O, error) {
+func Demux[I any, O any](ctx context.Context, initial I, steps ...Transformer[any, any]) (fs.Stream[O], error) {
 
-	return fs.ToSlice(fs.Map(fs.FromSlice(steps), func(t Transformer[any, any]) (O, error) {
+	return fs.Map(fs.FromSlice(steps), func(t Transformer[any, any]) (O, error) {
 		result, err := t(ctx, initial)
 		return result.(O), err
-	})), nil
+	}), nil
 }
 
 func bindIntoContext(ctx context.Context, value any) (context.Context, any) {

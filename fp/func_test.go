@@ -206,16 +206,17 @@ func TestDemux(t *testing.T) {
 		t.Errorf("Expected nil, got %v", err)
 	}
 
-	if output[0] != 43 {
-		t.Errorf("Expected 43, got %d", output[0])
+	var test int
+	if test, output = output(); test != 43 {
+		t.Errorf("Expected 43, got %d", test)
 	}
 
-	if output[1] != 84 {
-		t.Errorf("Expected 86, got %d", output[1])
+	if test, output = output(); test != 84 {
+		t.Errorf("Expected 84, got %d", test)
 	}
 
-	if output[2] != 21 {
-		t.Errorf("Expected 21, got %d", output[2])
+	if test, output = output(); test != 21 {
+		t.Errorf("Expected 21, got %d", test)
 	}
 }
 
