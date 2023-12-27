@@ -2,6 +2,7 @@ package fs
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -59,6 +60,37 @@ func TestMap(t *testing.T) {
 
 	if !set.ContainsAll(2, 4, 6, 8, 10) {
 		t.Errorf("Expected 2, 4, 6, 8 and 10, got %v", set)
+	}
+}
+
+func TestReduce(t *testing.T) {
+
+	if found := Reduce(FromSlice([]int{}), func(x, y int) int {
+		return x + y
+	}); found != 0 {
+		t.Errorf("Expected 0, got %d", found)
+	}
+
+	if found := Reduce(FromSlice([]int{1}), func(x, y int) int {
+		return x + y
+	}); found != 1 {
+		t.Errorf("Expected 1, got %d", found)
+	}
+
+	if found := Reduce(FromSlice([]int{1, 2, 3, 4, 5}), func(x, y int) int {
+		return x + y
+	}); found != 15 {
+
+		t.Errorf("Expected 15, got %d", found)
+	}
+}
+
+func TestReduceInto(t *testing.T) {
+
+	if found := ReduceInto(FromSlice([]int{1, 2, 3}), "", func(acc string, x int) string {
+		return fmt.Sprintf("%s%d", acc, x)
+	}); found != "123" {
+		t.Errorf("Expected 123, got %s", found)
 	}
 }
 
