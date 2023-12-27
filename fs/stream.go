@@ -88,6 +88,16 @@ func ReduceInto[I, O any](stream Stream[I], initial O, reducer func(O, I) O) O {
 	return result
 }
 
+func FindFirst[T any](stream Stream[T], predicate func(T) bool) (T, Stream[T]) {
+
+	for value, next := stream(); next != nil; value, next = next() {
+		if predicate(value) {
+			return value, next
+		}
+	}
+	return fu.Zero[T](), nil
+}
+
 func ToSet[T comparable](stream Stream[T]) fu.Set[T] {
 	set := make(fu.Set[T])
 
