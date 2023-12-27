@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"funcgo/fu"
 	"reflect"
 )
 
@@ -34,7 +35,7 @@ func Promise[I, O any](t Transformer[I, O]) Transformer[I, PromisedValue[O]] {
 				return result, err
 			}
 		}()
-		return memoizeWithError(func() (O, error) {
+		return fu.MemoizeWithError(func() (O, error) {
 			result := <-channel
 			return result()
 		}), nil
@@ -203,20 +204,5 @@ func createTransformerWithArguments[I, O any](f any) TransformerWithArguments[I,
 func curryOutTransformerArguments[I, O any](f TransformerWithArguments[I, O], p ...any) Transformer[I, O] {
 	return func(ctx context.Context, i I) (O, error) {
 		return f(ctx, i, p...)
-	}
-}
-
-func memoizeWithError[T any](f func() (T, error)) func() (T, error) {
-
-	memoized := false
-	var result T
-	var err error
-	return func() (T, error) {
-		if memoized {
-			return result, err
-		}
-		result, err = f()
-		memoized = true
-		return result, err
 	}
 }
