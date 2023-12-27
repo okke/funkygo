@@ -94,6 +94,26 @@ func TestReduceInto(t *testing.T) {
 	}
 }
 
+func TestFindFirst(t *testing.T) {
+	if found, _ := FindFirst(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) bool {
+		return x%2 == 0
+	}); found != 2 {
+		t.Errorf("Expected 2, got %d", found)
+	}
+
+	if found, rest := FindFirst(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) bool {
+		return x == 5
+	}); !(found == 5 && rest != nil) {
+		t.Errorf("Expected 5 and not nil, got %d, %v", found, rest)
+	}
+
+	if _, rest := FindFirst(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) bool {
+		return x > 10
+	}); rest != nil {
+		t.Errorf("Expected nil, got %v", rest)
+	}
+}
+
 func createRandomSliceOfInts(size int) []int {
 
 	slice := make([]int, size)
