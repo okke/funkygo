@@ -8,6 +8,35 @@ import (
 	"testing"
 )
 
+func TestPeek(t *testing.T) {
+
+	stream := FromSlice([]int{1, 2, 3})
+
+	if peeked := Peek(stream); peeked != 1 {
+		t.Errorf("Expected 1, got %d", peeked)
+	}
+
+	if peeked := Peek(stream); peeked != 1 {
+		t.Errorf("Expected 1, got %d", peeked)
+	}
+
+	if peeked := Peek(FromSlice([]int{})); peeked != 0 {
+		t.Errorf("Expected 0, got %d", Peek(FromSlice([]int{})))
+	}
+}
+
+func TestHasMore(t *testing.T) {
+
+	stream := FromSlice([]int{1, 2, 3})
+	if !HasMore(stream) {
+		t.Errorf("Expected true, got %v", HasMore(stream))
+	}
+
+	if more := HasMore(FromSlice([]int{})); more {
+		t.Errorf("Expected false, got %v", more)
+	}
+}
+
 func TestEach(t *testing.T) {
 
 	count := 0

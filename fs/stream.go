@@ -23,6 +23,16 @@ func ToSlice[T any](stream Stream[T]) []T {
 	return result
 }
 
+func Peek[T any](stream Stream[T]) T {
+	value, _ := stream()
+	return value
+}
+
+func HasMore[T any](stream Stream[T]) bool {
+	_, next := stream()
+	return next != nil
+}
+
 func Each[T any](stream Stream[T], callback func(T) error) error {
 
 	for e, s := stream(); s != nil; e, s = s() {
