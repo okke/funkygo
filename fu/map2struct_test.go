@@ -1,4 +1,4 @@
-package main
+package fu
 
 import "testing"
 
@@ -17,7 +17,7 @@ func TestMap2Struct(t *testing.T) {
 		"Foo":  "Bar",
 	}
 
-	result, err := map2struct(data, &Person{})
+	result, err := Map2Struct(data, &Person{})
 	if err != nil {
 		t.Errorf("Expected nil, got %v", err)
 	}

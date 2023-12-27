@@ -1,11 +1,11 @@
-package main
+package fu
 
 import (
 	"fmt"
 	"reflect"
 )
 
-func map2struct[T any](data map[string]any, into T) (T, error) {
+func Map2Struct[T any](data map[string]any, into T) (T, error) {
 	destValue := reflect.ValueOf(into)
 
 	// Check if destStruct is a pointer to a struct

@@ -1,9 +1,10 @@
-package main
+package fp
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"funcgo/fs"
 	"funcgo/fu"
 	"reflect"
 )
@@ -48,7 +49,7 @@ func Pipe[I any, O any](ctx context.Context, initial I, steps ...Transformer[any
 	for _, step := range steps {
 		stepResult, err := step(ctx, result)
 		if err != nil {
-			return *new(O), err
+			return fu.Zero[O](), err
 		}
 
 		ctx, result = bindIntoContext(ctx, stepResult)
@@ -125,7 +126,7 @@ func Bind[I any, O any](name string, t Transformer[I, O]) Transformer[any, any] 
 	return func(ctx context.Context, x any) (any, error) {
 		result, err := apply(ctx, x)
 		if err != nil {
-			return *new(O), err
+			return fu.Zero[O](), err
 		}
 		return bind[O](name, result.(O)), nil
 	}
@@ -159,13 +160,13 @@ func As[O any](into O) Transformer[any, any] {
 			}
 		}
 
-		return map2struct(mapping.(map[string]any), into)
+		return fu.Map2Struct(mapping.(map[string]any), into)
 	}
 }
 
 func result2TransformerResult[O any](result []reflect.Value) (O, error) {
 	if len(result) == 0 {
-		return *new(O), nil
+		return fu.Zero[O](), nil
 	} else if len(result) == 2 && !result[1].IsNil() {
 		return result[0].Interface().(O), result[1].Interface().(error)
 	}
@@ -182,11 +183,11 @@ func createTransformerWithArguments[I, O any](f any) TransformerWithArguments[I,
 
 		// Check if the variable is a function
 		if functionValue.Kind() != reflect.Func {
-			return *new(O), errors.New("transformer is not a function")
+			return fu.Zero[O](), errors.New("transformer is not a function")
 		}
 
-		args, _ := SliceMap(arguments, T(func(x any) reflect.Value {
-			return reflect.ValueOf(x)
+		args := fs.ToSlice(fs.Map(fs.FromSlice(arguments), func(argValue any) reflect.Value {
+			return reflect.ValueOf(argValue)
 		}))
 
 		allArgs := append([]reflect.Value{reflect.ValueOf(i)}, args...)
