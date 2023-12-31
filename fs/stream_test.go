@@ -163,6 +163,22 @@ func TestFindFirst(t *testing.T) {
 	}
 }
 
+func TestLimit(t *testing.T) {
+
+	limited := Limit(FromSlice([]int{1, 2, 3, 4, 5}), 3)
+	count := 0
+	Each(limited, func(x int) error {
+		count++
+		return nil
+	})
+
+	if count != 3 {
+		t.Errorf("Expected 3, got %d", count)
+	}
+}
+
+// ------------------------------------
+
 func createRandomSliceOfInts(size int) []int {
 
 	slice := make([]int, size)
