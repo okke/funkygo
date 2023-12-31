@@ -135,6 +135,17 @@ func FindFirst[T any](stream Stream[T], predicate func(T) bool) (T, Stream[T]) {
 	return fu.Zero[T](), nil
 }
 
+func Limit[T any](stream Stream[T], limit int) Stream[T] {
+
+	return func() (T, Stream[T]) {
+		if limit == 0 {
+			return fu.Zero[T](), nil
+		}
+		value, next := stream()
+		return value, Limit(next, limit-1)
+	}
+}
+
 func ToSet[T comparable](stream Stream[T]) fu.Set[T] {
 	set := make(fu.Set[T])
 
