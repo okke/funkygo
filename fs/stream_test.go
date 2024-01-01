@@ -3,6 +3,7 @@ package fs
 import (
 	"errors"
 	"fmt"
+	"funcgo/fu"
 	"math"
 	"math/rand"
 	"testing"
@@ -27,16 +28,10 @@ func TestPeek(t *testing.T) {
 
 func TestPeekWithChannel(t *testing.T) {
 
-	channel := make(chan int, 10)
-	channel <- 1
-	channel <- 2
-	channel <- 3
-	close(channel)
-
-	stream := FromChannel(channel)
-	var peeked int
+	stream := FromChannel(fu.C(1, 2, 3))
 
 	for i := 0; i < 10; i++ {
+		var peeked int
 		if peeked, stream = Peek(stream); peeked != 1 {
 			t.Errorf("Expected 1, got %d", peeked)
 		}
@@ -49,9 +44,33 @@ func TestPeekWithChannel(t *testing.T) {
 }
 
 func TestPeekN(t *testing.T) {
-	peeked, stream := PeekN(FromSlice([]int{1, 2, 3}), 2)
+
+	peeked, stream := PeekN(FromChannel(fu.C(1, 2, 3)), 2)
 
 	if count := Count(peeked); count != 2 {
+		t.Errorf("Expected 2, got %d", count)
+	}
+
+	if count := Count(stream); count != 3 {
+		t.Errorf("Expected 1, got %d", count)
+	}
+
+	var peekedValue int
+	if peekedValue, peeked = peeked(); peekedValue != 1 {
+		t.Errorf("Expected 1, got %d", peekedValue)
+	}
+
+	var unPeekedValue int
+	if unPeekedValue, stream = stream(); unPeekedValue != 1 {
+		t.Errorf("Expected 1, got %d", unPeekedValue)
+	}
+}
+
+func TestPeekNWithNotEnoughToPeek(t *testing.T) {
+
+	peeked, stream := PeekN(FromChannel(fu.C(1, 2, 3)), 5)
+
+	if count := Count(peeked); count != 3 {
 		t.Errorf("Expected 2, got %d", count)
 	}
 
