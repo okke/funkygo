@@ -4,6 +4,12 @@ import "funcgo/fu"
 
 type Stream[T any] func() (T, Stream[T])
 
+func Empty[T any]() Stream[T] {
+	return func() (T, Stream[T]) {
+		return fu.Zero[T](), nil
+	}
+}
+
 func Peek[T any](stream Stream[T]) (T, Stream[T]) {
 	value, next := stream()
 	return value, func() (T, Stream[T]) {
@@ -24,6 +30,15 @@ func Each[T any](stream Stream[T], callback func(T) error) error {
 		}
 	}
 	return nil
+}
+
+func Count[T any](stream Stream[T]) int {
+	count := 0
+	Each(stream, func(x T) error {
+		count++
+		return nil
+	})
+	return count
 }
 
 func Filter[T any](stream Stream[T], filter func(T) bool) Stream[T] {
@@ -128,6 +143,33 @@ func Limit[T any](stream Stream[T], limit int) Stream[T] {
 		}
 		value, next := stream()
 		return value, Limit(next, limit-1)
+	}
+}
+
+func Sequence[T any](streams ...Stream[T]) Stream[T] {
+	current, streamOfStreams := FromSlice(streams)()
+	if streamOfStreams == nil {
+		return Empty[T]()
+	}
+	return sequenceOfStreams(current, streamOfStreams)
+}
+
+func sequenceOfStreams[T any](current Stream[T], streamOfStreams Stream[Stream[T]]) Stream[T] {
+
+	return func() (T, Stream[T]) {
+
+		value, next := current()
+
+		for next == nil {
+			current, streamOfStreams = streamOfStreams()
+			if streamOfStreams == nil {
+				return fu.Zero[T](), nil
+			}
+
+			value, next = current()
+		}
+
+		return value, sequenceOfStreams(next, streamOfStreams)
 	}
 }
 

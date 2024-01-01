@@ -188,16 +188,45 @@ func TestFindFirst(t *testing.T) {
 
 func TestLimit(t *testing.T) {
 
-	limited := Limit(FromSlice([]int{1, 2, 3, 4, 5}), 3)
-	count := 0
-	Each(limited, func(x int) error {
-		count++
-		return nil
-	})
-
-	if count != 3 {
+	if count := Count(Limit(FromSlice([]int{1, 2, 3, 4, 5}), 3)); count != 3 {
 		t.Errorf("Expected 3, got %d", count)
 	}
+}
+
+func TestSequence(t *testing.T) {
+
+	stream := Sequence(FromSlice([]int{1, 2, 3}), FromSlice([]int{4, 5, 6}))
+
+	count := ReduceInto(stream, 0, func(acc int, x int) int {
+		return acc + x
+	})
+
+	if count != 21 {
+		t.Errorf("Expected 21, got %d", count)
+	}
+}
+
+func TestSequenceWithEmptyStreams(t *testing.T) {
+
+	if count := Count(Sequence(Empty[int]())); count != 0 {
+		t.Errorf("Expected 0, got %d", count)
+	}
+
+	if count := Count(Sequence(Empty[int](), Empty[int](), Empty[int]())); count != 0 {
+		t.Errorf("Expected 0, got %d", count)
+	}
+}
+
+func TestSequenceWithMultipleEmptyAndNonEmptyStream(t *testing.T) {
+
+	stream := Sequence(Empty[int](), FromSlice([]int{1, 2, 3}), Empty[int](), Empty[int](), FromSlice([]int{4, 5, 6}), Empty[int]())
+
+	if count := ReduceInto(stream, 0, func(acc int, x int) int {
+		return acc + x
+	}); count != 21 {
+		t.Errorf("Expected 21, got %d", count)
+	}
+
 }
 
 // ------------------------------------
