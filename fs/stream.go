@@ -4,9 +4,11 @@ import "funcgo/fu"
 
 type Stream[T any] func() (T, Stream[T])
 
-func Peek[T any](stream Stream[T]) T {
-	value, _ := stream()
-	return value
+func Peek[T any](stream Stream[T]) (T, Stream[T]) {
+	value, next := stream()
+	return value, func() (T, Stream[T]) {
+		return value, next
+	}
 }
 
 func HasMore[T any](stream Stream[T]) bool {

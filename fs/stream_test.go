@@ -12,17 +12,40 @@ func TestPeek(t *testing.T) {
 
 	stream := FromSlice([]int{1, 2, 3})
 
-	if peeked := Peek(stream); peeked != 1 {
+	if peeked, _ := Peek(stream); peeked != 1 {
 		t.Errorf("Expected 1, got %d", peeked)
 	}
 
-	if peeked := Peek(stream); peeked != 1 {
+	if peeked, _ := Peek(stream); peeked != 1 {
 		t.Errorf("Expected 1, got %d", peeked)
 	}
 
-	if peeked := Peek(FromSlice([]int{})); peeked != 0 {
-		t.Errorf("Expected 0, got %d", Peek(FromSlice([]int{})))
+	if peeked, _ := Peek(FromSlice([]int{})); peeked != 0 {
+		t.Errorf("Expected 0, got %d", peeked)
 	}
+}
+
+func TestPeekWithChannel(t *testing.T) {
+
+	channel := make(chan int, 10)
+	channel <- 1
+	channel <- 2
+	channel <- 3
+	close(channel)
+
+	stream := FromChannel(channel)
+	var peeked int
+
+	for i := 0; i < 10; i++ {
+		if peeked, stream = Peek(stream); peeked != 1 {
+			t.Errorf("Expected 1, got %d", peeked)
+		}
+	}
+
+	if reduced := ReduceInto(stream, 0, func(x, y int) int { return x + y }); reduced != 6 {
+		t.Errorf("Expected 6, got %d", reduced)
+	}
+
 }
 
 func TestHasMore(t *testing.T) {
