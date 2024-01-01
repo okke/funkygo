@@ -17,6 +17,22 @@ func Peek[T any](stream Stream[T]) (T, Stream[T]) {
 	}
 }
 
+func PeekN[T any](stream Stream[T], n int) (Stream[T], Stream[T]) {
+
+	values := make([]T, 0, n)
+
+	for i := 0; i < n; i++ {
+		var value T
+		value, stream = stream()
+		if stream == nil {
+			return FromSlice(values), FromSlice(values)
+		}
+		values = append(values, value)
+	}
+
+	return FromSlice(values), Sequence(FromSlice(values), stream)
+}
+
 func HasMore[T any](stream Stream[T]) bool {
 	_, next := stream()
 	return next != nil

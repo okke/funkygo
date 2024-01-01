@@ -48,6 +48,18 @@ func TestPeekWithChannel(t *testing.T) {
 
 }
 
+func TestPeekN(t *testing.T) {
+	peeked, stream := PeekN(FromSlice([]int{1, 2, 3}), 2)
+
+	if count := Count(peeked); count != 2 {
+		t.Errorf("Expected 2, got %d", count)
+	}
+
+	if count := Count(stream); count != 3 {
+		t.Errorf("Expected 1, got %d", count)
+	}
+}
+
 func TestHasMore(t *testing.T) {
 
 	stream := FromSlice([]int{1, 2, 3})
