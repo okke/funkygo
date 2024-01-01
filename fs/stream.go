@@ -18,8 +18,8 @@ func HasMore[T any](stream Stream[T]) bool {
 
 func Each[T any](stream Stream[T], callback func(T) error) error {
 
-	for e, s := stream(); s != nil; e, s = s() {
-		if err := callback(e); err != nil {
+	for value, next := stream(); next != nil; value, next = next() {
+		if err := callback(value); err != nil {
 			return err
 		}
 	}
@@ -90,9 +90,10 @@ func Reduce[T any](stream Stream[T], reducer func(T, T) T) T {
 		return result
 	}
 
-	for value, next := next(); next != nil; value, next = next() {
+	Each(next, func(value T) error {
 		result = reducer(result, value)
-	}
+		return nil
+	})
 
 	return result
 }
@@ -101,9 +102,10 @@ func ReduceInto[I, O any](stream Stream[I], initial O, reducer func(O, I) O) O {
 
 	result := initial
 
-	for value, next := stream(); next != nil; value, next = next() {
+	Each(stream, func(value I) error {
 		result = reducer(result, value)
-	}
+		return nil
+	})
 
 	return result
 }
@@ -132,9 +134,10 @@ func Limit[T any](stream Stream[T], limit int) Stream[T] {
 func ToSet[T comparable](stream Stream[T]) fu.Set[T] {
 	set := make(fu.Set[T])
 
-	for value, next := stream(); next != nil; value, next = next() {
+	Each(stream, func(value T) error {
 		set = set.Add(value)
-	}
+		return nil
+	})
 
 	return set
 }
