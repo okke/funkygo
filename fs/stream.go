@@ -1,14 +1,8 @@
 package fs
 
-import "funcgo/fu"
+import "github.com/okke/funkygo/fu"
 
 type Stream[T any] func() (T, Stream[T])
-
-func Empty[T any]() Stream[T] {
-	return func() (T, Stream[T]) {
-		return fu.Zero[T](), nil
-	}
-}
 
 func Peek[T any](stream Stream[T]) (T, Stream[T]) {
 	value, next := stream()
@@ -30,6 +24,22 @@ func PeekN[T any](stream Stream[T], n int) (Stream[T], Stream[T]) {
 	}
 
 	return FromSlice(values), Sequence(FromSlice(values), stream)
+}
+
+func PeekUntil[T any](stream Stream[T], until func(T) bool) (Stream[T], Stream[T]) {
+
+	values := []T{}
+
+	var value T
+	for value, stream = stream(); stream != nil && !until(value); value, stream = stream() {
+		values = append(values, value)
+	}
+
+	if stream == nil {
+		return FromSlice(values), FromSlice(values)
+	}
+
+	return FromSlice(values), Sequence(FromSlice(values), FromValue(value), stream)
 }
 
 func HasMore[T any](stream Stream[T]) bool {

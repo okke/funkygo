@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"funcgo/fs"
-	"funcgo/fu"
+	"github.com/okke/funkygo/fs"
+	"github.com/okke/funkygo/fu"
 	"reflect"
 )
 

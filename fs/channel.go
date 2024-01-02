@@ -1,6 +1,6 @@
 package fs
 
-import "funcgo/fu"
+import "github.com/okke/funkygo/fu"
 
 func FromChannel[T any](channel <-chan T) Stream[T] {
 	return func() (T, Stream[T]) {

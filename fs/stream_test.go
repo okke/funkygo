@@ -3,10 +3,11 @@ package fs
 import (
 	"errors"
 	"fmt"
-	"funcgo/fu"
 	"math"
 	"math/rand"
 	"testing"
+
+	"github.com/okke/funkygo/fu"
 )
 
 func TestPeek(t *testing.T) {
@@ -76,6 +77,21 @@ func TestPeekNWithNotEnoughToPeek(t *testing.T) {
 
 	if count := Count(stream); count != 3 {
 		t.Errorf("Expected 1, got %d", count)
+	}
+}
+
+func TestPeekUntil(t *testing.T) {
+
+	peeked, stream := PeekUntil(FromChannel(fu.C(1, 1, 1, 2, 3)), func(x int) bool {
+		return x != 1
+	})
+
+	if count := Count(peeked); count != 3 {
+		t.Errorf("Expected 3, got %d", count)
+	}
+
+	if count := Count(stream); count != 5 {
+		t.Errorf("Expected 5, got %d", count)
 	}
 }
 
