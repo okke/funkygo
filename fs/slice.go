@@ -12,6 +12,10 @@ func FromSlice[T any](slice []T) Stream[T] {
 	}
 }
 
+func FromArgs[T any](args ...T) Stream[T] {
+	return FromSlice(args)
+}
+
 func ToSlice[T any](stream Stream[T]) []T {
 
 	result := []T{}

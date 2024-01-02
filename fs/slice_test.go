@@ -14,3 +14,13 @@ func TestFromAndToSlice(t *testing.T) {
 		t.Errorf("Expected %v, got %v", slice, result)
 	}
 }
+
+func TestFromArgs(t *testing.T) {
+
+	slice := []int{1, 2, 3}
+	stream := FromArgs(slice...)
+	result := ToSlice(stream)
+	if !reflect.DeepEqual(result, slice) {
+		t.Errorf("Expected %v, got %v", slice, result)
+	}
+}
