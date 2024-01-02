@@ -39,7 +39,7 @@ func PeekUntil[T any](stream Stream[T], until func(T) bool) (Stream[T], Stream[T
 		return FromSlice(values), FromSlice(values)
 	}
 
-	return FromSlice(values), Sequence(FromSlice(values), FromValue(value), stream)
+	return FromSlice(values), Sequence(FromSlice(append(values, value)), stream)
 }
 
 func HasMore[T any](stream Stream[T]) bool {
