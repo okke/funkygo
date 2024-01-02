@@ -122,6 +122,36 @@ func TestTakeNByTakingTooMuch(t *testing.T) {
 	}
 }
 
+func TestTakeUntil(t *testing.T) {
+
+	taken, stream := TakeUntil(FromChannel(fu.C(1, 1, 1, 2, 3)), func(x int) bool {
+		return x != 1
+	})
+
+	if count := Count(taken); count != 3 {
+		t.Errorf("Expected 3, got %d", count)
+	}
+
+	if count := Count(stream); count != 2 {
+		t.Errorf("Expected 2, got %d", count)
+	}
+}
+
+func TestTakeUntilByTakingEverything(t *testing.T) {
+
+	taken, stream := TakeUntil(FromChannel(fu.C(1, 1, 1, 2, 3)), func(x int) bool {
+		return false
+	})
+
+	if count := Count(taken); count != 5 {
+		t.Error("Expected 5, got", count)
+	}
+
+	if count := Count(stream); count != 0 {
+		t.Error("Expected 0, got", count)
+	}
+}
+
 func TestHasMore(t *testing.T) {
 
 	stream := FromSlice([]int{1, 2, 3})

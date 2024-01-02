@@ -57,6 +57,22 @@ func TakeN[T any](stream Stream[T], n int) (Stream[T], Stream[T]) {
 	return FromSlice(values), stream
 }
 
+func TakeUntil[T any](stream Stream[T], until func(T) bool) (Stream[T], Stream[T]) {
+
+	values := []T{}
+
+	var value T
+	for value, stream = stream(); stream != nil && !until(value); value, stream = stream() {
+		values = append(values, value)
+	}
+
+	if stream == nil {
+		return FromSlice(values), Empty[T]()
+	}
+
+	return FromSlice(values), Sequence(FromValue(value), stream)
+}
+
 func HasMore[T any](stream Stream[T]) bool {
 	_, next := stream()
 	return next != nil
