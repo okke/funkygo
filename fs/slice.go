@@ -1,6 +1,6 @@
 package fs
 
-import "funcgo/fu"
+import "github.com/okke/funkygo/fu"
 
 func FromSlice[T any](slice []T) Stream[T] {
 
