@@ -95,6 +95,33 @@ func TestPeekUntil(t *testing.T) {
 	}
 }
 
+func TestTakeN(t *testing.T) {
+
+	taken, stream := TakeN(FromChannel(fu.C(1, 2, 3)), 2)
+
+	if count := Count(taken); count != 2 {
+		t.Errorf("Expected 2, got %d", count)
+	}
+
+	if count := Count(stream); count != 1 {
+		t.Errorf("Expected 1, got %d", count)
+	}
+
+}
+
+func TestTakeNByTakingTooMuch(t *testing.T) {
+
+	taken, stream := TakeN(FromChannel(fu.C(1, 2, 3)), 5)
+
+	if count := Count(taken); count != 3 {
+		t.Errorf("Expected 3, got %d", count)
+	}
+
+	if count := Count(stream); count != 0 {
+		t.Errorf("Expected 0, got %d", count)
+	}
+}
+
 func TestHasMore(t *testing.T) {
 
 	stream := FromSlice([]int{1, 2, 3})

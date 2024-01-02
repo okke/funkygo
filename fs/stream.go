@@ -42,6 +42,21 @@ func PeekUntil[T any](stream Stream[T], until func(T) bool) (Stream[T], Stream[T
 	return FromSlice(values), Sequence(FromSlice(append(values, value)), stream)
 }
 
+func TakeN[T any](stream Stream[T], n int) (Stream[T], Stream[T]) {
+
+	values := make([]T, 0, n)
+
+	for i := 0; i < n; i++ {
+		if value, stream := stream(); stream == nil {
+			return FromSlice(values), Empty[T]()
+		} else {
+			values = append(values, value)
+		}
+	}
+
+	return FromSlice(values), stream
+}
+
 func HasMore[T any](stream Stream[T]) bool {
 	_, next := stream()
 	return next != nil
