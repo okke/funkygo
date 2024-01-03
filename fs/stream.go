@@ -47,7 +47,8 @@ func TakeN[T any](stream Stream[T], n int) (Stream[T], Stream[T]) {
 	values := make([]T, 0, n)
 
 	for i := 0; i < n; i++ {
-		if value, stream := stream(); stream == nil {
+		var value T
+		if value, stream = stream(); stream == nil {
 			return FromSlice(values), Empty[T]()
 		} else {
 			values = append(values, value)

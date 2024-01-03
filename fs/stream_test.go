@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"testing"
+	"unicode"
 
 	"github.com/okke/funkygo/fu"
 )
@@ -134,6 +135,15 @@ func TestTakeUntil(t *testing.T) {
 
 	if count := Count(stream); count != 2 {
 		t.Errorf("Expected 2, got %d", count)
+	}
+}
+
+func TestTakeNAfterTakeUntil(t *testing.T) {
+	ignored, _ := TakeUntil(FromArgs('a', 'b', 'C'), unicode.IsUpper)
+	firstThreeIgnored, _ := TakeN(ignored, 3) // can only take two
+
+	if count := Count(firstThreeIgnored); count != 2 {
+		t.Error("Expected 2, got", count)
 	}
 }
 
