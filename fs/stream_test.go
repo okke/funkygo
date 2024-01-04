@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"reflect"
 	"testing"
 	"unicode"
 
@@ -340,7 +341,34 @@ func TestSequenceWithMultipleEmptyAndNonEmptyStream(t *testing.T) {
 	}); count != 21 {
 		t.Errorf("Expected 21, got %d", count)
 	}
+}
 
+func TestAppend(t *testing.T) {
+
+	stream := Append(FromSlice([]int{1, 2, 3}), 5, 6, 7)
+
+	if count := Count(stream); count != 6 {
+		t.Errorf("Expected 6, got %d", count)
+	}
+
+	slice := ToSlice(stream)
+	if expected := []int{1, 2, 3, 5, 6, 7}; !reflect.DeepEqual(slice, expected) {
+		t.Errorf("Expected %v, got %v", expected, slice)
+	}
+}
+
+func TestPrepend(t *testing.T) {
+
+	stream := Prepend(FromSlice([]int{1, 2, 3}), 5, 6, 7)
+
+	if count := Count(stream); count != 6 {
+		t.Errorf("Expected 6, got %d", count)
+	}
+
+	slice := ToSlice(stream)
+	if expected := []int{5, 6, 7, 1, 2, 3}; !reflect.DeepEqual(slice, expected) {
+		t.Errorf("Expected %v, got %v", expected, slice)
+	}
 }
 
 // ------------------------------------

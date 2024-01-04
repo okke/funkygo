@@ -230,6 +230,14 @@ func sequenceOfStreams[T any](current Stream[T], streamOfStreams Stream[Stream[T
 	}
 }
 
+func Append[T any](stream Stream[T], values ...T) Stream[T] {
+	return Sequence(stream, FromSlice(values))
+}
+
+func Prepend[T any](stream Stream[T], values ...T) Stream[T] {
+	return Sequence(FromSlice(values), stream)
+}
+
 func ToSet[T comparable](stream Stream[T]) fu.Set[T] {
 	set := make(fu.Set[T])
 
