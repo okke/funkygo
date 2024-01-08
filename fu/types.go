@@ -11,6 +11,7 @@ type CanError[T any] func() (T, error)
 type Either[L, R any] func() (L, R, LeftOrRight)
 type ValueOrError[T any] Either[T, error]
 type OptionalValue[T any] func() (*T, bool)
+type Pointer[T any] func() *T
 
 func Left[L, R any](left L) Either[L, R] {
 	return func() (L, R, LeftOrRight) {
@@ -65,6 +66,13 @@ func Optional[T any](value *T) OptionalValue[T] {
 	}
 }
 
+func OptionalP[T any](value Pointer[T]) OptionalValue[T] {
+	return func() (*T, bool) {
+		v := value()
+		return v, v != nil
+	}
+}
+
 func (o OptionalValue[T]) Exists() bool {
 	_, exists := o()
 	return exists
@@ -83,5 +91,17 @@ func (o OptionalValue[T]) Or(fill func() *T) OptionalValue[T] {
 		return o
 	} else {
 		return Optional(fill())
+	}
+}
+
+func Ptr[T any](value T) Pointer[T] {
+	return func() *T {
+		return &value
+	}
+}
+
+func Nil[T any]() Pointer[T] {
+	return func() *T {
+		return nil
 	}
 }

@@ -49,16 +49,16 @@ func TestTryAndReturn(t *testing.T) {
 		}).Return()
 	}
 
-	if !wasPositive {
-		t.Error("Expected wasPositive to be true")
-	}
-
 	if positiveResult, err := positive(); err != nil {
 		t.Error(err)
 	} else {
 		if positiveResult != "soup" {
 			t.Errorf("Expected soup, got %s", positiveResult)
 		}
+	}
+
+	if !wasPositive {
+		t.Error("Expected positive soup")
 	}
 
 	negative := func() (string, error) {
@@ -73,50 +73,61 @@ func TestTryAndReturn(t *testing.T) {
 	}
 }
 
-func TestOptional(t *testing.T) {
+type testStructForOptional struct {
+	value string
+}
 
-	type testStruct struct {
-		value string
-	}
+func TestOptionalNilDo(t *testing.T) {
 
-	Optional[testStruct](nil).Do(func(s *testStruct) {
+	Optional[testStructForOptional](nil).Do(func(s *testStructForOptional) {
 		t.Errorf("Expected nil, got %v", s)
 	})
+}
 
-	test := &testStruct{
+func TestOptionalDo(t *testing.T) {
+
+	test := &testStructForOptional{
 		value: "soup",
 	}
 	done := false
-	Optional(test).Do(func(s *testStruct) {
+	Optional(test).Do(func(s *testStructForOptional) {
 		done = true
 	})
 
 	if !done {
 		t.Error("Expected done to be true")
 	}
+}
 
-	done = false
-	Optional[testStruct](nil).Do(func(s *testStruct) {
-		done = true
+func TestOptionalOr(t *testing.T) {
+
+	done := false
+
+	Optional[string](nil).Or(Ptr("soup")).Do(func(s *string) {
+		done = *s == "soup"
 	})
 
-	if done {
-		t.Error("Expected done to be false")
+	if !done {
+		t.Error("Expected done to be true")
 	}
+}
 
-	done = false
+func TestOptionalNotExecutedOr(t *testing.T) {
 
-	Optional[testStruct](nil).Or(func() *testStruct {
-		return &testStruct{
-			value: "soup",
-		}
-	}).Do(func(s *testStruct) {
-		done = s.value == "soup"
+	notDone := false
+
+	OptionalP(Ptr("sauce")).Or(Ptr("soup")).Do(func(s *string) {
+		notDone = *s == "sauce"
 	})
 
-	noString := Optional[string](nil).Or(func() *string {
-		return nil
-	})
+	if !notDone {
+		t.Error("Expected done to be true")
+	}
+}
+
+func TestOptionalExists(t *testing.T) {
+
+	noString := Optional[string](nil).Or(Nil[string]())
 
 	if noString.Exists() {
 		t.Error("Expected noString to be false")
