@@ -371,6 +371,25 @@ func TestPrepend(t *testing.T) {
 	}
 }
 
+func TestChop(t *testing.T) {
+
+	slice := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	stream := Chop(FromSlice(slice), 3)
+
+	if count := Count(stream); count != 4 {
+		t.Errorf("Expected 4, got %d", count)
+	}
+
+	chopLengths := ToSlice(Map(Chop(FromSlice(slice), 3), func(x []int) (int, error) {
+		return len(x), nil
+	}))
+
+	if !reflect.DeepEqual(chopLengths, []int{3, 3, 3, 1}) {
+		t.Errorf("Expected %v, got %v", []int{3, 3, 3, 1}, chopLengths)
+	}
+
+}
+
 // ------------------------------------
 
 func createRandomSliceOfInts(size int) []int {

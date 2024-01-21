@@ -238,6 +238,25 @@ func Prepend[T any](stream Stream[T], values ...T) Stream[T] {
 	return Sequence(FromSlice(values), stream)
 }
 
+func Chop[T any](stream Stream[T], amount int) Stream[[]T] {
+
+	return func() ([]T, Stream[[]T]) {
+
+		result := make([]T, 0, amount)
+
+		for i := 0; i < amount; i++ {
+			var value T
+			value, stream = stream()
+			if stream == nil {
+				return result, Empty[[]T]()
+			}
+			result = append(result, value)
+		}
+
+		return result, Chop(stream, amount)
+	}
+}
+
 func ToSet[T comparable](stream Stream[T]) fu.Set[T] {
 	set := make(fu.Set[T])
 
