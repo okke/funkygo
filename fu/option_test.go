@@ -1,6 +1,9 @@
 package fu
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestConstruct(t *testing.T) {
 
@@ -11,7 +14,7 @@ func TestConstruct(t *testing.T) {
 
 	withA := func(s string) Option[testStruct] {
 		return func(t *testStruct) {
-			t.A = s
+			t.A = strings.ToUpper(s)
 		}
 	}
 
@@ -27,8 +30,8 @@ func TestConstruct(t *testing.T) {
 
 	result := constructor(withA("foo"), withB(42))
 
-	if result.A != "foo" {
-		t.Errorf("Expected foo, got %s", result.A)
+	if result.A != "FOO" {
+		t.Errorf("Expected FOO, got %s", result.A)
 	}
 
 	if result.B != 42 {
