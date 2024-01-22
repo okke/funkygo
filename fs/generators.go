@@ -17,7 +17,11 @@ func While[T any](start T, while func(T) bool, next func(T) T) Stream[T] {
 }
 
 func Range[T fu.Number](start T, end T, step T) Stream[T] {
-	return While(start, fu.Lte(end), fu.Add(step))
+	if start < end {
+		return While(start, fu.Lte(end), fu.Add(step))
+	} else {
+		return While(start, fu.Gte(end), fu.Add(step))
+	}
 }
 
 func Endless[T any](value T) Stream[T] {

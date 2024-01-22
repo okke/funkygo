@@ -32,7 +32,7 @@ func TestNumericOperations(t *testing.T) {
 		t.Error("Expected 2 + 1 = 3")
 	}
 
-	if Minus(2)(1) != -1 {
+	if Subtract(2)(1) != -1 {
 		t.Error("Expected 1 - 2 = -1")
 	}
 

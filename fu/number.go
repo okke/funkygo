@@ -48,7 +48,7 @@ func Add[T Number](v T) func(T) T {
 	}
 }
 
-func Minus[T Number](v T) func(T) T {
+func Subtract[T Number](v T) func(T) T {
 	return func(n T) T {
 		return n - v
 	}
@@ -77,5 +77,5 @@ func Increment[T Number]() func(T) T {
 }
 
 func Decrement[T Number]() func(T) T {
-	return Minus[T](1)
+	return Subtract[T](1)
 }
