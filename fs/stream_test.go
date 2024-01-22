@@ -371,21 +371,44 @@ func TestPrepend(t *testing.T) {
 	}
 }
 
-func TestChop(t *testing.T) {
+func TestChopN(t *testing.T) {
 
 	slice := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-	stream := Chop(FromSlice(slice), 3)
+	stream := ChopN(FromSlice(slice), 3)
 
 	if count := Count(stream); count != 4 {
 		t.Errorf("Expected 4, got %d", count)
 	}
 
-	chopLengths := ToSlice(Map(Chop(FromSlice(slice), 3), func(x []int) (int, error) {
+	chopLengths := ToSlice(Map(ChopN(FromSlice(slice), 3), func(x []int) (int, error) {
 		return len(x), nil
 	}))
 
 	if !reflect.DeepEqual(chopLengths, []int{3, 3, 3, 1}) {
 		t.Errorf("Expected %v, got %v", []int{3, 3, 3, 1}, chopLengths)
+	}
+}
+
+func TestChop(t *testing.T) {
+
+	slice := []int{10, 11, 12, 20, 21, 22, 30, 31, 32}
+	stream := Chop(FromSlice(slice), func(x1, x2 int) bool {
+		return x2-x1 > 1
+	})
+
+	chop, next := stream()
+	if !reflect.DeepEqual(chop, []int{10, 11, 12}) {
+		t.Errorf("Expected %v, got %v", []int{10, 11, 12}, chop)
+	}
+
+	chop, next = next()
+	if !reflect.DeepEqual(chop, []int{20, 21, 22}) {
+		t.Errorf("Expected %v, got %v", []int{20, 21, 22}, chop)
+	}
+
+	chop, next = next()
+	if !reflect.DeepEqual(chop, []int{30, 31, 32}) {
+		t.Errorf("Expected %v, got %v", []int{30, 31, 32}, chop)
 	}
 
 }

@@ -1,6 +1,8 @@
 package fs
 
-import "github.com/okke/funkygo/fu"
+import (
+	"github.com/okke/funkygo/fu"
+)
 
 type Stream[T any] func() (T, Stream[T])
 
@@ -238,7 +240,7 @@ func Prepend[T any](stream Stream[T], values ...T) Stream[T] {
 	return Sequence(FromSlice(values), stream)
 }
 
-func Chop[T any](stream Stream[T], amount int) Stream[[]T] {
+func ChopN[T any](stream Stream[T], amount int) Stream[[]T] {
 
 	return func() ([]T, Stream[[]T]) {
 
@@ -253,7 +255,33 @@ func Chop[T any](stream Stream[T], amount int) Stream[[]T] {
 			result = append(result, value)
 		}
 
-		return result, Chop(stream, amount)
+		return result, ChopN(stream, amount)
+	}
+}
+
+func Chop[T any](stream Stream[T], shouldChop func(T, T) bool) Stream[[]T] {
+
+	return func() ([]T, Stream[[]T]) {
+
+		result := []T{}
+
+		for {
+			current, more := stream()
+			if more == nil {
+				return result, Empty[[]T]()
+			}
+			result = append(result, current)
+			next, more := Peek(more)
+			if more == nil {
+				return result, Empty[[]T]()
+			}
+
+			if shouldChop(current, next) {
+				return result, Chop(more, shouldChop)
+			}
+
+			stream = more
+		}
 	}
 }
 
