@@ -76,11 +76,6 @@ func TakeUntil[T any](stream Stream[T], until func(T) bool) (Stream[T], Stream[T
 	return FromSlice(values), Sequence(FromValue(value), stream)
 }
 
-func HasMore[T any](stream Stream[T]) bool {
-	_, next := stream()
-	return next != nil
-}
-
 func Each[T any](stream Stream[T], callback func(T) error) error {
 
 	for value, next := stream(); next != nil; value, next = next() {

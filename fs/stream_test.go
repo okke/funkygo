@@ -163,18 +163,6 @@ func TestTakeUntilByTakingEverything(t *testing.T) {
 	}
 }
 
-func TestHasMore(t *testing.T) {
-
-	stream := FromSlice([]int{1, 2, 3})
-	if !HasMore(stream) {
-		t.Errorf("Expected true, got %v", HasMore(stream))
-	}
-
-	if more := HasMore(FromSlice([]int{})); more {
-		t.Errorf("Expected false, got %v", more)
-	}
-}
-
 func TestEach(t *testing.T) {
 
 	count := 0
