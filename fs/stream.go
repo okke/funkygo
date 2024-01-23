@@ -86,6 +86,24 @@ func Each[T any](stream Stream[T], callback func(T) error) error {
 	return nil
 }
 
+func EachUntil[T any](stream Stream[T], until func(T) bool, callback func(T) error) (Stream[T], error) {
+
+	for {
+		var value T
+		value, stream = Peek(stream)
+		if until(value) {
+			return stream, nil
+		}
+		value, stream = stream()
+		if err := callback(value); err != nil {
+			return stream, err
+		}
+		if stream == nil {
+			return stream, nil
+		}
+	}
+}
+
 func Count[T any](stream Stream[T]) int {
 	count := 0
 	Each(stream, func(x T) error {

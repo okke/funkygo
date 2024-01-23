@@ -188,6 +188,23 @@ func TestEach(t *testing.T) {
 
 }
 
+func TestEachUntil(t *testing.T) {
+
+	slice := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	stream, err := EachUntil(FromSlice(slice), fu.Gte(5), func(x int) error {
+		if x == 5 {
+			return errors.New("oh no")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Error("Expected no error, got", err)
+	}
+	if s := ToSlice(stream); !reflect.DeepEqual(s, []int{5, 6, 7, 8, 9}) {
+		t.Error("Expected [5, 6, 7, 8, 9], got", s)
+	}
+}
+
 func TestFilter(t *testing.T) {
 
 	stream := Filter(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) bool {
