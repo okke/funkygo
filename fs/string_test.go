@@ -23,12 +23,40 @@ func TestFromString(t *testing.T) {
 
 func TestRunes2Lines(t *testing.T) {
 
+	non := ToSlice(Runes2Lines(nil))
+	if len(non) != 0 {
+		t.Error("Expected 0, got", len(non))
+	}
+
 	lines := ToSlice(Runes2Lines(FromString("abc\ndef")))
 	if lines[0] != "abc" {
 		t.Error("Expected 'abc', got", lines[0])
 	}
 	if lines[1] != "def" {
 		t.Error("Expected 'def', got", lines[1])
+	}
+
+	lines = ToSlice(Runes2Lines(FromString("abc\r\ndef")))
+	if lines[0] != "abc" {
+		t.Error("Expected 'abc', got", lines[0])
+	}
+	if lines[1] != "def" {
+		t.Error("Expected 'def', got", lines[1])
+	}
+
+	lines = ToSlice(Runes2Lines(FromString("abc\rdef")))
+	if lines[0] != "abc\rdef" {
+		t.Error("Expected 'abc\\rdef', got", lines[0])
+	}
+
+	lines = ToSlice(Runes2Lines(FromString("\n")))
+	if lines[0] != "" {
+		t.Error("Expected '', got", lines[0])
+	}
+
+	lines = ToSlice(Runes2Lines(FromString("\n\n")))
+	if lines[1] != "" {
+		t.Error("Expected '', got", lines[0])
 	}
 
 }
