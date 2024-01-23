@@ -45,8 +45,8 @@ func TestRunes2Lines(t *testing.T) {
 	}
 
 	lines = ToSlice(Runes2Lines(FromString("abc\rdef")))
-	if lines[0] != "abc\rdef" {
-		t.Error("Expected 'abc\\rdef', got", lines[0])
+	if lines[0] != "abcdef" {
+		t.Error("Expected 'abcdef', got", lines[0])
 	}
 
 	lines = ToSlice(Runes2Lines(FromString("\n")))

@@ -95,11 +95,13 @@ func EachUntil[T any](stream Stream[T], until func(T) bool, callback func(T) err
 			return stream, nil
 		}
 		value, stream = stream()
-		if err := callback(value); err != nil {
-			return stream, err
-		}
+
 		if stream == nil {
 			return stream, nil
+		}
+
+		if err := callback(value); err != nil {
+			return stream, err
 		}
 	}
 }

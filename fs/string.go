@@ -1,6 +1,10 @@
 package fs
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/okke/funkygo/fu"
+)
 
 func FromString(s string) Stream[rune] {
 	return func() (rune, Stream[rune]) {
@@ -19,24 +23,19 @@ func Runes2Lines(stream Stream[rune]) Stream[string] {
 
 	return func() (string, Stream[string]) {
 		var sb strings.Builder
-		var r rune
 
-		for r, stream = stream(); stream != nil; r, stream = stream() {
-			switch r {
-			case '\n':
-				return sb.String(), Runes2Lines(stream)
-			case '\r':
-				r2, input := Peek(stream)
-				if r2 == '\n' {
-					_, input = input()
-					return sb.String(), Runes2Lines(input)
-				} else {
+		stream, _ := EachUntil(stream,
+			fu.Eq('\n'),
+			fu.Safe(func(r rune) {
+				if r != '\r' {
 					sb.WriteRune(r)
 				}
-			default:
-				sb.WriteRune(r)
-			}
+			}))
+
+		if stream != nil {
+			_, stream = stream()
 		}
+
 		return sb.String(), Runes2Lines(stream)
 	}
 }
