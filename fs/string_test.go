@@ -20,3 +20,15 @@ func TestFromString(t *testing.T) {
 	}
 
 }
+
+func TestRunes2Lines(t *testing.T) {
+
+	lines := ToSlice(Runes2Lines(FromString("abc\ndef")))
+	if lines[0] != "abc" {
+		t.Error("Expected 'abc', got", lines[0])
+	}
+	if lines[1] != "def" {
+		t.Error("Expected 'def', got", lines[1])
+	}
+
+}
