@@ -255,6 +255,19 @@ func TestMap(t *testing.T) {
 	}
 }
 
+func TestFlatMap(t *testing.T) {
+
+	stream := FlatMap(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) Stream[int] {
+		return FromSlice([]int{x, x})
+	})
+
+	arr := ToSlice(stream)
+
+	if !reflect.DeepEqual(arr, []int{1, 1, 2, 2, 3, 3, 4, 4, 5, 5}) {
+		t.Errorf("Expected [1, 1, 2, 2, 3, 3, 4, 4, 5, 5], got %v", arr)
+	}
+}
+
 func TestReduce(t *testing.T) {
 
 	if found := Reduce(FromSlice([]int{}), func(x, y int) int {

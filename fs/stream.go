@@ -172,6 +172,19 @@ func Map[I, O any](stream Stream[I], mapper func(I) (O, error)) Stream[O] {
 	}
 }
 
+func FlatMap[I, O any](stream Stream[I], mapper func(I) Stream[O]) Stream[O] {
+
+	return func() (O, Stream[O]) {
+		value, next := stream()
+		if next == nil {
+			return fu.Zero[O](), nil
+		}
+		mapped, moreToMap := mapper(value)()
+
+		return mapped, Sequence(moreToMap, FlatMap(next, mapper))
+	}
+}
+
 func Reduce[T any](stream Stream[T], reducer func(T, T) T) T {
 
 	result, next := stream()
