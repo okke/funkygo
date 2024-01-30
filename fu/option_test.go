@@ -48,3 +48,24 @@ func TestConstruct(t *testing.T) {
 		t.Errorf("Expected empty string, got %s", result.A)
 	}
 }
+
+func TestWith(t *testing.T) {
+
+	type testStruct struct {
+		A string
+	}
+
+	withA := func(s string) Option[testStruct] {
+		return func(t *testStruct) {
+			t.A = strings.ToUpper(s)
+		}
+	}
+
+	var s testStruct
+
+	With(&s, withA("foo"))
+
+	if s.A != "FOO" {
+		t.Errorf("Expected FOO, got %s", s.A)
+	}
+}
