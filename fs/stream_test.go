@@ -268,6 +268,22 @@ func TestFlatMap(t *testing.T) {
 	}
 }
 
+func TestFlatMapWithEmpty(t *testing.T) {
+
+	stream := FlatMap(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) Stream[int] {
+		if x%2 == 0 {
+			return FromSlice([]int{x, x})
+		}
+		return Empty[int]()
+	})
+
+	arr := ToSlice(stream)
+
+	if !reflect.DeepEqual(arr, []int{2, 2, 4, 4}) {
+		t.Errorf("Expected [2, 2, 4, 4], got %v", arr)
+	}
+}
+
 func TestReduce(t *testing.T) {
 
 	if found := Reduce(FromSlice([]int{}), func(x, y int) int {
@@ -337,6 +353,16 @@ func TestSequence(t *testing.T) {
 	if count != 21 {
 		t.Errorf("Expected 21, got %d", count)
 	}
+
+	empty := Sequence(Empty[int](), Empty[int]())
+	if count := Count(empty); count != 0 {
+		t.Errorf("Expected 0, got %d", count)
+	}
+
+	notSoEmpty := Sequence(FromSlice([]int{1, 2, 3}), Empty[int](), FromSlice([]int{1, 2, 3}))
+	if count := Count(notSoEmpty); count != 6 {
+		t.Errorf("Expected 3, got %d", count)
+	}
 }
 
 func TestSequenceWithEmptyStreams(t *testing.T) {
@@ -347,6 +373,11 @@ func TestSequenceWithEmptyStreams(t *testing.T) {
 
 	if count := Count(Sequence(Empty[int](), Empty[int](), Empty[int]())); count != 0 {
 		t.Errorf("Expected 0, got %d", count)
+	}
+
+	slice := ToSlice(Sequence(FromArgs(1, 2, 3), Empty[int](), FromArgs(4, 5, 6)))
+	if !reflect.DeepEqual(slice, []int{1, 2, 3, 4, 5, 6}) {
+		t.Errorf("Expected [1, 2, 3, 4, 5, 6], got %v", slice)
 	}
 }
 

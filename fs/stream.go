@@ -8,6 +8,7 @@ type Stream[T any] func() (T, Stream[T])
 
 func Peek[T any](stream Stream[T]) (T, Stream[T]) {
 	value, next := stream()
+
 	return value, func() (T, Stream[T]) {
 		return value, next
 	}
@@ -179,9 +180,16 @@ func FlatMap[I, O any](stream Stream[I], mapper func(I) Stream[O]) Stream[O] {
 		if next == nil {
 			return fu.Zero[O](), nil
 		}
-		mapped, moreToMap := mapper(value)()
 
-		return mapped, Sequence(moreToMap, FlatMap(next, mapper))
+		mapped := mapper(value)
+		mappedIsEmpty, mapped := IsEmpty(mapped)
+		if mappedIsEmpty {
+			return FlatMap(next, mapper)()
+		}
+
+		mappedStream, moreToMap := mapped()
+
+		return mappedStream, TwoStreams(moreToMap, FlatMap(next, mapper))
 	}
 }
 
@@ -233,30 +241,71 @@ func Limit[T any](stream Stream[T], limit int) Stream[T] {
 	}
 }
 
+func ToPointers[T any](stream Stream[T]) Stream[*T] {
+	isEmpty, stream := IsEmpty(stream)
+	if isEmpty {
+		return func() (*T, Stream[*T]) {
+			return nil, nil
+		}
+	}
+	return Map(stream, func(x T) (*T, error) {
+		return &x, nil
+	})
+}
+
+func TwoStreams[T any](stream1 Stream[T], stream2 Stream[T]) Stream[T] {
+	isEmpty1, stream1 := IsEmpty(stream1)
+	if isEmpty1 {
+		return stream2
+	}
+
+	isEmpty2, stream2 := IsEmpty(stream2)
+	if isEmpty2 {
+		return stream1
+	}
+
+	return func() (T, Stream[T]) {
+		value, next1 := stream1()
+		return value, TwoStreams(next1, stream2)
+	}
+}
+
 func Sequence[T any](streams ...Stream[T]) Stream[T] {
-	current, streamOfStreams := FromSlice(streams)()
+
+	streamOfStreams := Map(Filter(FromSlice(streams), func(x Stream[T]) bool { return x != nil }),
+		func(s Stream[T]) (Stream[*T], error) {
+			return ToPointers(s), nil
+		})
+
 	if streamOfStreams == nil {
 		return Empty[T]()
 	}
-	return sequenceOfStreams(current, streamOfStreams)
+
+	current, streamOfStreams := streamOfStreams()
+
+	return Map(Filter(sequenceOfPointerStreams(current, streamOfStreams), func(x *T) bool {
+		return x != nil
+	}), func(x *T) (T, error) {
+		return *x, nil
+	})
 }
 
-func sequenceOfStreams[T any](current Stream[T], streamOfStreams Stream[Stream[T]]) Stream[T] {
+func sequenceOfPointerStreams[T any](current Stream[*T], streamOfStreams Stream[Stream[*T]]) Stream[*T] {
 
-	return func() (T, Stream[T]) {
+	return func() (*T, Stream[*T]) {
 
-		value, next := current()
+		isEmpty, current := IsEmpty(current)
 
-		for next == nil {
+		if isEmpty {
 			current, streamOfStreams = streamOfStreams()
 			if streamOfStreams == nil {
-				return fu.Zero[T](), nil
+				return nil, nil
 			}
-
-			value, next = current()
+			return nil, sequenceOfPointerStreams(current, streamOfStreams)
 		}
 
-		return value, sequenceOfStreams(next, streamOfStreams)
+		value, next := current()
+		return value, sequenceOfPointerStreams(next, streamOfStreams)
 	}
 }
 
