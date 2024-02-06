@@ -2,7 +2,6 @@ package fu
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 	"testing"
@@ -22,7 +21,6 @@ func TestWithMutex(t *testing.T) {
 		go func(i int) {
 			defer waitGroup.Done()
 			WithMutex(&m, func() {
-				log.Println("add " + fmt.Sprintf("%d", i))
 				for j := 0; j < i; j++ {
 
 					// sleep for a little bit
