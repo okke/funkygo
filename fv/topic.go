@@ -3,6 +3,7 @@ package fv
 import (
 	"sync"
 
+	"github.com/okke/funkygo/fs"
 	"github.com/okke/funkygo/fu"
 )
 
@@ -41,14 +42,24 @@ func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[
 
 	opts := fu.Construct[TopicOptions](options...)
 
-	topicChannel := make(chan T)
-	subscribeChannels := make([]chan T, opts.topicBufSize)
+	topicChannel := make(chan T, opts.topicBufSize)
+	subscribeChannels := []chan T{}
+	unsubscribeChannel := make(chan struct{}, 16)
 
 	var mutex sync.Mutex
 
 	go func() {
 		for {
 			inform(&mutex, topicChannel, subscribeChannels)
+		}
+	}()
+
+	go func() {
+		for {
+			<-unsubscribeChannel
+			fu.WithMutex(&mutex, func() {
+				subscribeChannels = fs.ToSlice(fs.Filter(fs.FromSlice(subscribeChannels), func(c chan T) bool { return c != nil }))
+			})
 		}
 	}()
 
@@ -87,8 +98,10 @@ func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[
 			return func() {
 
 				fu.WithMutex(&mutex, func() {
+					close(subscribeChannels[subscriberIndex])
 					subscribeChannels[subscriberIndex] = nil
 					doneChannel <- struct{}{}
+					unsubscribeChannel <- struct{}{}
 				})
 			}
 		}
