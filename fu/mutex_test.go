@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestWithMutex(t *testing.T) {
@@ -23,6 +24,10 @@ func TestWithMutex(t *testing.T) {
 			WithMutex(&m, func() {
 				log.Println("add " + fmt.Sprintf("%d", i))
 				for j := 0; j < i; j++ {
+
+					// sleep for a little bit
+					//
+					time.Sleep(1 * time.Millisecond)
 					builder.WriteString(fmt.Sprintf("%d", i))
 				}
 			})
