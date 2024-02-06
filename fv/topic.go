@@ -40,7 +40,10 @@ Topic creates a topic and returns the publish and the subscribe functions
 */
 func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[T]) {
 
-	opts := fu.Construct[TopicOptions](options...)
+	opts := fu.With(&TopicOptions{
+		topicBufSize:      256,
+		subscriberBufSize: 256,
+	}, options...)
 
 	topicChannel := make(chan T, opts.topicBufSize)
 	subscribeChannels := []chan T{}

@@ -37,7 +37,7 @@ func TestTopic(t *testing.T) {
 
 func TestTopicUnsubscribe(t *testing.T) {
 
-	pub, sub := Topic[int](TopicBufSize(16), SubscriberBufSize(16))
+	pub, sub := Topic[int]()
 
 	calls := 0
 	done := make(chan struct{}, 16)

@@ -12,8 +12,9 @@ func Construct[T any](options ...Option[T]) *T {
 	return &value
 }
 
-func With[T any](value *T, options ...Option[T]) {
+func With[T any](value *T, options ...Option[T]) *T {
 	for _, option := range options {
 		option(value)
 	}
+	return value
 }
