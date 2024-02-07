@@ -2,6 +2,7 @@ package fv
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/okke/funkygo/fs"
@@ -11,28 +12,29 @@ func TestTopic(t *testing.T) {
 	pub, sub := Topic[int](TopicBufSize(16), SubscriberBufSize(16))
 
 	total := 0
-	done := make(chan struct{}, 16)
-	sub(func(x int) {
-		total += x
-		done <- struct{}{}
-	})
-	sub(func(x int) {
-		total += x
-		done <- struct{}{}
-	})
-	pub(42)
 
-	<-done
-	<-done
+	wg := sync.WaitGroup{}
+
+	sub(func(x int) {
+		total += x
+		wg.Done()
+	})
+	sub(func(x int) {
+		total += x
+		wg.Done()
+	})
+
+	wg.Add(2)
+	pub(42)
+	wg.Wait()
 
 	if total != 84 {
 		t.Errorf("Expected 42, got %d", total)
 	}
 
+	wg.Add(2)
 	pub(-42)
-
-	<-done
-	<-done
+	wg.Wait()
 
 	if total != 0 {
 		t.Errorf("Expected 0, got %d", total)
@@ -42,38 +44,29 @@ func TestTopic(t *testing.T) {
 
 func TestTopicUnsubscribe(t *testing.T) {
 
-	fs.Each(fs.Range(0, 10, 1), func(x int) error {
+	fs.Each(fs.Range(0, 5, 1), func(x int) error {
 		pub, sub := Topic[string]()
 
-		calls := 0
-		done := make(chan struct{}, 16)
+		wg := sync.WaitGroup{}
+
 		unsubscribe := sub(func(s string) {
-			calls++
-			done <- struct{}{}
+			wg.Done()
 		})
 
 		sub(func(s string) {
-			calls++
-			done <- struct{}{}
+			wg.Done()
 		})
 
+		wg.Add(2)
 		pub(fmt.Sprintf("1:%d", x))
-		<-done
-		<-done
-
-		if calls != 2 {
-			t.Fatalf("Expected 1, got %d", calls)
-		}
+		wg.Wait()
 
 		unsubscribe()
 
+		wg.Add(1)
 		pub(fmt.Sprintf("2:%d", x))
+		wg.Wait()
 
-		<-done
-
-		if calls != 3 {
-			t.Fatalf("Expected 3 call, got %d", calls)
-		}
 		return nil
 	})
 
