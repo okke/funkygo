@@ -1,4 +1,4 @@
-package fv
+package fc
 
 import (
 	"github.com/okke/funkygo/fs"
