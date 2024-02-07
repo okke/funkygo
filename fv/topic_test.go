@@ -1,6 +1,11 @@
 package fv
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+
+	"github.com/okke/funkygo/fs"
+)
 
 func TestTopic(t *testing.T) {
 	pub, sub := Topic[int](TopicBufSize(16), SubscriberBufSize(16))
@@ -37,42 +42,39 @@ func TestTopic(t *testing.T) {
 
 func TestTopicUnsubscribe(t *testing.T) {
 
-	pub, sub := Topic[int]()
+	fs.Each(fs.Range(0, 10, 1), func(x int) error {
+		pub, sub := Topic[string]()
 
-	calls := 0
-	done := make(chan struct{}, 16)
-	unsubscribe := sub(func(x int) {
-		calls++
-		done <- struct{}{}
+		calls := 0
+		done := make(chan struct{}, 16)
+		unsubscribe := sub(func(s string) {
+			calls++
+			done <- struct{}{}
+		})
+
+		sub(func(s string) {
+			calls++
+			done <- struct{}{}
+		})
+
+		pub(fmt.Sprintf("1:%d", x))
+		<-done
+		<-done
+
+		if calls != 2 {
+			t.Fatalf("Expected 1, got %d", calls)
+		}
+
+		unsubscribe()
+
+		pub(fmt.Sprintf("2:%d", x))
+
+		<-done
+
+		if calls != 3 {
+			t.Fatalf("Expected 3 call, got %d", calls)
+		}
+		return nil
 	})
-
-	sub(func(x int) {
-		calls++
-		done <- struct{}{}
-	})
-
-	pub(42)
-	<-done
-	<-done
-
-	if calls != 2 {
-		t.Errorf("Expected 1, got %d", calls)
-	}
-
-	unsubscribe()
-
-	pub(42)
-
-	<-done
-	select {
-	case <-done:
-		t.Errorf("Expected only one call to be finished")
-	default:
-		// ok
-	}
-
-	if calls != 3 {
-		t.Errorf("Expected 3 call, got %d", calls)
-	}
 
 }

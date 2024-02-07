@@ -1,4 +1,4 @@
-package fu
+package fv
 
 import (
 	"fmt"
@@ -8,10 +8,11 @@ import (
 	"time"
 )
 
-func TestWithMutex(t *testing.T) {
+func TestMutex(t *testing.T) {
 
-	var m sync.Mutex
 	var builder strings.Builder
+
+	m := NewMutex()
 
 	waitGroup := sync.WaitGroup{}
 
@@ -20,7 +21,7 @@ func TestWithMutex(t *testing.T) {
 		waitGroup.Add(1)
 		go func(i int) {
 			defer waitGroup.Done()
-			WithMutex(&m, func() {
+			m(func() {
 				for j := 0; j < i; j++ {
 
 					// sleep for a little bit

@@ -1,8 +1,6 @@
 package fv
 
 import (
-	"sync"
-
 	"github.com/okke/funkygo/fs"
 	"github.com/okke/funkygo/fu"
 )
@@ -45,29 +43,29 @@ func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[
 		subscriberBufSize: 256,
 	}, options...)
 
-	topicChannel := make(chan T, opts.topicBufSize)
-	subscribeChannels := []chan T{}
+	topicChannel := make(chan *T, opts.topicBufSize)
+	subscribeChannels := []chan *T{}
 	unsubscribeChannel := make(chan struct{}, 16)
 
-	var mutex sync.Mutex
+	synchronized := NewMutex()
 
 	go func() {
 		for {
-			inform(&mutex, topicChannel, subscribeChannels)
+			dispatch(synchronized, topicChannel, subscribeChannels)
 		}
 	}()
 
 	go func() {
 		for {
 			<-unsubscribeChannel
-			fu.WithMutex(&mutex, func() {
-				subscribeChannels = fs.ToSlice(fs.Filter(fs.FromSlice(subscribeChannels), func(c chan T) bool { return c != nil }))
+			synchronized(func() {
+				subscribeChannels = fs.ToSlice(fs.Filter(fs.FromSlice(subscribeChannels), func(c chan *T) bool { return c != nil }))
 			})
 		}
 	}()
 
 	return func(t T) {
-			topicChannel <- t
+			topicChannel <- &t
 		},
 
 		// subscribe
@@ -75,10 +73,10 @@ func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[
 		func(f func(T)) func() {
 
 			doneChannel := make(chan struct{}, 16)
-			subChannel := make(chan T, opts.subscriberBufSize)
+			subChannel := make(chan *T, opts.subscriberBufSize)
 
 			var subscriberIndex int
-			fu.WithMutex(&mutex, func() {
+			synchronized(func() {
 				subscriberIndex = len(subscribeChannels)
 				subscribeChannels = append(subscribeChannels, subChannel)
 			})
@@ -89,7 +87,9 @@ func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[
 					case <-doneChannel:
 						return
 					case msg := <-subChannel:
-						go f(msg)
+						if msg != nil {
+							go f(*msg)
+						}
 					default:
 						// do nothing
 					}
@@ -100,7 +100,7 @@ func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[
 			//
 			return func() {
 
-				fu.WithMutex(&mutex, func() {
+				synchronized(func() {
 					close(subscribeChannels[subscriberIndex])
 					subscribeChannels[subscriberIndex] = nil
 					doneChannel <- struct{}{}
@@ -110,14 +110,23 @@ func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[
 		}
 }
 
-func inform[T any](mutex *sync.Mutex, channel chan T, subscribers []chan T) {
+func dispatch[T any](synchronized Mutex, topicChannel chan *T, subscribers []chan *T) {
 
-	msg := <-channel
-	fu.WithMutex(mutex, func() {
-		for _, subChannel := range subscribers {
-			if subChannel != nil {
-				subChannel <- msg
-			}
+	select {
+	case msg := <-topicChannel:
+		if msg == nil {
+			return
 		}
-	})
+
+		synchronized(func() {
+			for _, subChannel := range subscribers {
+				if subChannel != nil {
+					subChannel <- msg
+				}
+			}
+		})
+	default:
+		return
+	}
+
 }
