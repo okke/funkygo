@@ -24,6 +24,10 @@ func Range[T fu.Number](start T, end T, step T) Stream[T] {
 	}
 }
 
+func RangeN[T fu.Number](to T) Stream[T] {
+	return Range[T](0, to, 1)
+}
+
 func Endless[T any](value T) Stream[T] {
 	return func() (T, Stream[T]) {
 		return value, Endless(value)

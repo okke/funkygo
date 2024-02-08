@@ -3,6 +3,8 @@ package fc
 import (
 	"runtime"
 	"testing"
+
+	"github.com/okke/funkygo/fs"
 )
 
 func TestWaitN(t *testing.T) {
@@ -10,22 +12,25 @@ func TestWaitN(t *testing.T) {
 	count := 0
 	WaitN(2, func(done func()) {
 		go func() {
-			count++
-			done()
-			runtime.Gosched()
-			count++
-			done()
+			fs.Each(fs.RangeN(1), func(x int) error {
+				go func() {
+					runtime.Gosched()
+					count++
+					done()
+				}()
+				return nil
+			})
 		}()
 	})(3, func(doneAsWell func()) {
 		go func() {
-			count++
-			doneAsWell()
-			runtime.Gosched()
-			count++
-			doneAsWell()
-			runtime.Gosched()
-			count++
-			doneAsWell()
+			fs.Each(fs.RangeN(2), func(x int) error {
+				go func() {
+					runtime.Gosched()
+					count++
+					doneAsWell()
+				}()
+				return nil
+			})
 		}()
 	})
 
