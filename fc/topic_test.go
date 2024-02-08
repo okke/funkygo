@@ -13,28 +13,27 @@ func TestTopic(t *testing.T) {
 
 	total := 0
 
-	wg := sync.WaitGroup{}
+	waitMore := WaitN(2, func(done func()) {
 
-	sub(func(x int) {
-		total += x
-		wg.Done()
-	})
-	sub(func(x int) {
-		total += x
-		wg.Done()
-	})
+		sub(func(x int) {
+			total += x
+			done()
+		})
+		sub(func(x int) {
+			total += x
+			done()
+		})
 
-	wg.Add(2)
-	pub(42)
-	wg.Wait()
+		pub(42)
+	})
 
 	if total != 84 {
 		t.Errorf("Expected 42, got %d", total)
 	}
 
-	wg.Add(2)
-	pub(-42)
-	wg.Wait()
+	waitMore(2, func(done func()) {
+		pub(-42)
+	})
 
 	if total != 0 {
 		t.Errorf("Expected 0, got %d", total)
