@@ -2,7 +2,6 @@ package fc
 
 import (
 	"fmt"
-	"sync"
 	"testing"
 
 	"github.com/okke/funkygo/fs"
@@ -45,26 +44,25 @@ func TestTopicUnsubscribe(t *testing.T) {
 
 	fs.Each(fs.Range(0, 5, 1), func(x int) error {
 		pub, sub := Topic[string]()
+		var unsubscribe UnSubscriber
 
-		wg := sync.WaitGroup{}
+		waitMore := WaitN(2, func(done func()) {
+			unsubscribe = sub(func(s string) {
+				done()
+			})
 
-		unsubscribe := sub(func(s string) {
-			wg.Done()
+			sub(func(s string) {
+				done()
+			})
+
+			pub(fmt.Sprintf("1:%d", x))
 		})
-
-		sub(func(s string) {
-			wg.Done()
-		})
-
-		wg.Add(2)
-		pub(fmt.Sprintf("1:%d", x))
-		wg.Wait()
 
 		unsubscribe()
 
-		wg.Add(1)
-		pub(fmt.Sprintf("2:%d", x))
-		wg.Wait()
+		waitMore(1, func(done func()) {
+			pub(fmt.Sprintf("2:%d", x))
+		})
 
 		return nil
 	})

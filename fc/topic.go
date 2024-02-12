@@ -14,22 +14,27 @@ type Publisher[T any] func(T)
 A subscriber is a function taking a handler for messages and returning a function
 which can be called to unsubscribe from the topic
 */
-type Subscriber[T any] func(func(T)) func()
+type Subscriber[T any] func(func(T)) UnSubscriber
+
+/*
+An unsubscriber is a function which can be called to unsubscribe from the topic
+*/
+type UnSubscriber func()
 
 type TopicOptions struct {
-	topicBufSize      int
-	subscriberBufSize int
+	TopicBufSize      int
+	SubscriberBufSize int
 }
 
 func TopicBufSize(size int) fu.Option[TopicOptions] {
 	return func(options *TopicOptions) {
-		options.topicBufSize = size
+		options.TopicBufSize = size
 	}
 }
 
 func SubscriberBufSize(size int) fu.Option[TopicOptions] {
 	return func(options *TopicOptions) {
-		options.subscriberBufSize = size
+		options.SubscriberBufSize = size
 	}
 }
 
@@ -39,11 +44,11 @@ Topic creates a topic and returns the publish and the subscribe functions
 func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[T]) {
 
 	opts := fu.With(&TopicOptions{
-		topicBufSize:      256,
-		subscriberBufSize: 256,
+		TopicBufSize:      256,
+		SubscriberBufSize: 256,
 	}, options...)
 
-	topicChannel := make(chan *T, opts.topicBufSize)
+	topicChannel := make(chan *T, opts.TopicBufSize)
 	subscribeChannels := []chan *T{}
 	unsubscribeChannel := make(chan struct{}, 16)
 
@@ -70,10 +75,10 @@ func Topic[T any](options ...fu.Option[TopicOptions]) (Publisher[T], Subscriber[
 
 		// subscribe
 		//
-		func(f func(T)) func() {
+		func(f func(T)) UnSubscriber {
 
 			doneChannel := make(chan struct{}, 16)
-			subChannel := make(chan *T, opts.subscriberBufSize)
+			subChannel := make(chan *T, opts.SubscriberBufSize)
 
 			var subscriberIndex int
 			synchronized(func() {
