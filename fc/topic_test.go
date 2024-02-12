@@ -12,7 +12,7 @@ func TestTopic(t *testing.T) {
 
 	total := 0
 
-	waitMore := WaitN(2, func(done func()) {
+	waitMore := WaitN(2, func(done Done) {
 
 		sub(func(x int) {
 			total += x
@@ -30,7 +30,7 @@ func TestTopic(t *testing.T) {
 		t.Errorf("Expected 42, got %d", total)
 	}
 
-	waitMore(2, func(done func()) {
+	waitMore(2, func(done Done) {
 		pub(-42)
 	})
 
@@ -46,7 +46,7 @@ func TestTopicUnsubscribe(t *testing.T) {
 		pub, sub := Topic[string]()
 		var unsubscribe UnSubscriber
 
-		waitMore := WaitN(2, func(done func()) {
+		waitMore := WaitN(2, func(done Done) {
 			unsubscribe = sub(func(s string) {
 				done()
 			})
@@ -60,7 +60,7 @@ func TestTopicUnsubscribe(t *testing.T) {
 
 		unsubscribe()
 
-		waitMore(1, func(done func()) {
+		waitMore(1, func(done Done) {
 			pub(fmt.Sprintf("2:%d", x))
 		})
 
