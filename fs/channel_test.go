@@ -13,9 +13,8 @@ func TestFromChannel(t *testing.T) {
 	stream := FromChannel(channel)
 
 	count := 0
-	Each(stream, func(x int) error {
+	Each(stream, func(x int) {
 		count += x
-		return nil
 	})
 
 	if count != 6 {

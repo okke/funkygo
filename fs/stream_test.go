@@ -166,26 +166,12 @@ func TestTakeUntilByTakingEverything(t *testing.T) {
 func TestEach(t *testing.T) {
 
 	count := 0
-	Each(FromSlice([]int{}), func(x int) error {
+	Each(FromSlice([]int{}), func(x int) {
 		count += x
-		return nil
 	})
 	if count != 0 {
 		t.Errorf("Expected 0, got %d", count)
 	}
-
-	Each(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) error {
-		count += x
-		if x == 3 {
-			return errors.New("oh no")
-		}
-		return nil
-	})
-
-	if count != 6 {
-		t.Errorf("Expected 15, got %d", count)
-	}
-
 }
 
 func TestEachUntil(t *testing.T) {
@@ -486,9 +472,8 @@ func BenchmarkFilter(b *testing.B) {
 
 		Each(Filter(largeStreamOfInts, func(x int) bool {
 			return x%20000 == 0
-		}), func(x int) error {
+		}), func(x int) {
 			count++
-			return nil
 		})
 
 		b.Log("set with length", count)

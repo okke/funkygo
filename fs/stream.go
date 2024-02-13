@@ -77,12 +77,10 @@ func TakeUntil[T any](stream Stream[T], until func(T) bool) (Stream[T], Stream[T
 	return FromSlice(values), Sequence(FromValue(value), stream)
 }
 
-func Each[T any](stream Stream[T], callback func(T) error) error {
+func Each[T any](stream Stream[T], callback func(T)) error {
 
 	for value, next := stream(); next != nil; value, next = next() {
-		if err := callback(value); err != nil {
-			return err
-		}
+		callback(value)
 	}
 	return nil
 }
@@ -109,9 +107,8 @@ func EachUntil[T any](stream Stream[T], until func(T) bool, callback func(T) err
 
 func Count[T any](stream Stream[T]) int {
 	count := 0
-	Each(stream, func(x T) error {
+	Each(stream, func(x T) {
 		count++
-		return nil
 	})
 	return count
 }
@@ -200,9 +197,8 @@ func Reduce[T any](stream Stream[T], reducer func(T, T) T) T {
 		return result
 	}
 
-	Each(next, func(value T) error {
+	Each(next, func(value T) {
 		result = reducer(result, value)
-		return nil
 	})
 
 	return result
@@ -212,9 +208,8 @@ func ReduceInto[I, O any](stream Stream[I], initial O, reducer func(O, I) O) O {
 
 	result := initial
 
-	Each(stream, func(value I) error {
+	Each(stream, func(value I) {
 		result = reducer(result, value)
-		return nil
 	})
 
 	return result
@@ -365,9 +360,8 @@ func Chop[T any](stream Stream[T], shouldChop func(T, T) bool) Stream[[]T] {
 func ToSet[T comparable](stream Stream[T]) fu.Set[T] {
 	set := make(fu.Set[T])
 
-	Each(stream, func(value T) error {
+	Each(stream, func(value T) {
 		set = set.Add(value)
-		return nil
 	})
 
 	return set

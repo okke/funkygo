@@ -13,24 +13,22 @@ func TestWaitN(t *testing.T) {
 	var count int64 = 0
 	WaitN(2, func(done Done) {
 		go func() {
-			fs.Each(fs.RangeN(1), func(x int) error {
+			fs.Each(fs.RangeN(1), func(x int) {
 				go func() {
 					runtime.Gosched()
 					atomic.AddInt64(&count, 1)
 					done()
 				}()
-				return nil
 			})
 		}()
 	})(3, func(doneAsWell Done) {
 		go func() {
-			fs.Each(fs.RangeN(2), func(x int) error {
+			fs.Each(fs.RangeN(2), func(x int) {
 				go func() {
 					runtime.Gosched()
 					atomic.AddInt64(&count, 1)
 					doneAsWell()
 				}()
-				return nil
 			})
 		}()
 	})
