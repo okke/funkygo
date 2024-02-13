@@ -92,17 +92,13 @@ func EachUntil[T any](stream Stream[T], until func(T) bool, callback func(T)) St
 
 	for {
 		var value T
-		value, stream = Peek(stream)
-		if stream == nil {
-			return stream
-		}
-		if until(value) {
-			return stream
-		}
 		value, stream = stream()
-
 		if stream == nil {
 			return stream
+		}
+
+		if until(value) {
+			return func() (T, Stream[T]) { return value, stream }
 		}
 
 		callback(value)
@@ -113,17 +109,13 @@ func EachUntilError[T any](stream Stream[T], callback func(T) error) (Stream[T],
 
 	for {
 		var value T
-		value, stream = Peek(stream)
+		value, stream = stream()
 		if stream == nil {
 			return stream, nil
 		}
 
 		if err := callback(value); err != nil {
-			return stream, err
-		}
-		value, stream = stream()
-		if stream == nil {
-			return stream, nil
+			return func() (T, Stream[T]) { return value, stream }, err
 		}
 	}
 }
