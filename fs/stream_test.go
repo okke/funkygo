@@ -28,6 +28,13 @@ func TestPeek(t *testing.T) {
 	}
 }
 
+func TestPeekOnEmptyStream(t *testing.T) {
+
+	if _, stream := Peek(FromSlice([]int{})); stream != nil {
+		t.Errorf("Expected nil, got %v", stream)
+	}
+}
+
 func TestPeekWithChannel(t *testing.T) {
 
 	stream := FromChannel(fu.C(1, 2, 3))
@@ -185,6 +192,50 @@ func TestEachUntil(t *testing.T) {
 	}
 	if s := ToSlice(stream); !reflect.DeepEqual(s, []int{5, 6, 7, 8, 9}) {
 		t.Error("Expected [5, 6, 7, 8, 9], got", s)
+	}
+}
+
+func TestEachUntilError(t *testing.T) {
+
+	slice := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	count := 0
+
+	stream, err := EachUntilError(FromSlice(slice), func(x int) error {
+		if x == 5 {
+			return fmt.Errorf("error")
+		}
+		count++
+		return nil
+	})
+
+	if err == nil {
+		t.Error("Expected error")
+	}
+
+	if count != 4 {
+		t.Error("Expected 4, got", count)
+	}
+
+	if s := ToSlice(stream); !reflect.DeepEqual(s, []int{5, 6, 7, 8, 9}) {
+		t.Error("Expected [5, 6, 7, 8, 9], got", s)
+	}
+}
+
+func TestEchUntilNotError(t *testing.T) {
+
+	slice := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	count := 0
+	stream, err := EachUntilError(FromSlice(slice), fu.Safe(func(x int) {
+		count++
+	}))
+	if err != nil {
+		t.Error("Expected no error, got", err)
+	}
+	if count != 9 {
+		t.Error("Expected 9, got", count)
+	}
+	if stream != nil {
+		t.Error("Expected nil, got", stream)
 	}
 }
 

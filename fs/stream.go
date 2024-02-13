@@ -7,7 +7,11 @@ import (
 type Stream[T any] func() (T, Stream[T])
 
 func Peek[T any](stream Stream[T]) (T, Stream[T]) {
+
 	value, next := stream()
+	if next == nil {
+		return value, nil
+	}
 
 	return value, func() (T, Stream[T]) {
 		return value, next
@@ -89,6 +93,9 @@ func EachUntil[T any](stream Stream[T], until func(T) bool, callback func(T)) St
 	for {
 		var value T
 		value, stream = Peek(stream)
+		if stream == nil {
+			return stream
+		}
 		if until(value) {
 			return stream
 		}
@@ -99,6 +106,25 @@ func EachUntil[T any](stream Stream[T], until func(T) bool, callback func(T)) St
 		}
 
 		callback(value)
+	}
+}
+
+func EachUntilError[T any](stream Stream[T], callback func(T) error) (Stream[T], error) {
+
+	for {
+		var value T
+		value, stream = Peek(stream)
+		if stream == nil {
+			return stream, nil
+		}
+
+		if err := callback(value); err != nil {
+			return stream, err
+		}
+		value, stream = stream()
+		if stream == nil {
+			return stream, nil
+		}
 	}
 }
 
