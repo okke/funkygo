@@ -42,7 +42,7 @@ func TestTopic(t *testing.T) {
 
 func TestTopicUnsubscribe(t *testing.T) {
 
-	fs.Each(fs.Range(0, 5, 1), func(x int) error {
+	fs.Each(fs.Range(0, 5, 1), func(x int) {
 		pub, sub := Topic[string]()
 		var unsubscribe UnSubscriber
 
@@ -64,7 +64,6 @@ func TestTopicUnsubscribe(t *testing.T) {
 			pub(fmt.Sprintf("2:%d", x))
 		})
 
-		return nil
 	})
 
 }

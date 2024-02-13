@@ -77,31 +77,28 @@ func TakeUntil[T any](stream Stream[T], until func(T) bool) (Stream[T], Stream[T
 	return FromSlice(values), Sequence(FromValue(value), stream)
 }
 
-func Each[T any](stream Stream[T], callback func(T)) error {
+func Each[T any](stream Stream[T], callback func(T)) {
 
 	for value, next := stream(); next != nil; value, next = next() {
 		callback(value)
 	}
-	return nil
 }
 
-func EachUntil[T any](stream Stream[T], until func(T) bool, callback func(T) error) (Stream[T], error) {
+func EachUntil[T any](stream Stream[T], until func(T) bool, callback func(T)) Stream[T] {
 
 	for {
 		var value T
 		value, stream = Peek(stream)
 		if until(value) {
-			return stream, nil
+			return stream
 		}
 		value, stream = stream()
 
 		if stream == nil {
-			return stream, nil
+			return stream
 		}
 
-		if err := callback(value); err != nil {
-			return stream, err
-		}
+		callback(value)
 	}
 }
 

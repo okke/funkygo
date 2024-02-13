@@ -24,13 +24,13 @@ func Runes2Lines(stream Stream[rune]) Stream[string] {
 	return func() (string, Stream[string]) {
 		var sb strings.Builder
 
-		stream, _ := EachUntil(stream,
+		stream := EachUntil(stream,
 			fu.Eq('\n'),
-			fu.Safe(func(r rune) {
+			func(r rune) {
 				if r != '\r' {
 					sb.WriteRune(r)
 				}
-			}))
+			})
 
 		if stream != nil {
 			_, stream = stream()

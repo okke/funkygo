@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -177,14 +176,12 @@ func TestEach(t *testing.T) {
 func TestEachUntil(t *testing.T) {
 
 	slice := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	stream, err := EachUntil(FromSlice(slice), fu.Gte(5), func(x int) error {
-		if x == 5 {
-			return errors.New("oh no")
-		}
-		return nil
+	count := 0
+	stream := EachUntil(FromSlice(slice), fu.Gte(5), func(x int) {
+		count++
 	})
-	if err != nil {
-		t.Error("Expected no error, got", err)
+	if count != 4 {
+		t.Error("Expected 4, got", count)
 	}
 	if s := ToSlice(stream); !reflect.DeepEqual(s, []int{5, 6, 7, 8, 9}) {
 		t.Error("Expected [5, 6, 7, 8, 9], got", s)
