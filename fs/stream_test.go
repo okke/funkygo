@@ -260,10 +260,26 @@ func TestMatchFirst(t *testing.T) {
 
 	if matched, rest := MatchFirst(FromSlice([]int{1, 2, 3}), 1, 2, 3); !matched {
 		t.Errorf("Expected 1, 2 and 3, got %v", rest)
+	} else {
+		if isEmpty, _ := IsEmpty(rest); !isEmpty {
+			t.Errorf("Expected empty stream, got %v", rest)
+		}
+	}
+
+	if matched, rest := MatchFirst(FromSlice([]int{1, 2, 3}), 1); !matched {
+		t.Errorf("Did expect 1")
+	} else {
+		if c := Count(rest); c != 2 {
+			t.Errorf("Expected 2, got %d", c)
+		}
 	}
 
 	if matched, rest := MatchFirst(FromSlice([]int{1, 2, 3}), 5); matched {
 		t.Errorf("Did not expect 5, got %v", rest)
+	} else {
+		if c := Count(rest); c != 3 {
+			t.Errorf("Expected 3, got %d", c)
+		}
 	}
 }
 
