@@ -276,6 +276,26 @@ func TestDistinct(t *testing.T) {
 
 }
 
+func TestDistinctBy(t *testing.T) {
+
+	type Person struct {
+		Name string
+	}
+
+	distinct := DistinctBy(FromSlice([]Person{
+		{Name: "John"},
+		{Name: "Jane"},
+		{Name: "John"},
+		{Name: "Jane"},
+	}), func(x Person) string {
+		return x.Name
+	})
+
+	if Count(distinct) != 2 {
+		t.Errorf("Expected 2, got %v", distinct)
+	}
+}
+
 func TestMap(t *testing.T) {
 
 	stream := Map(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) (int, error) {

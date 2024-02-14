@@ -158,6 +158,20 @@ func Distinct[T comparable](stream Stream[T]) Stream[T] {
 
 }
 
+func DistinctBy[T any, K comparable](stream Stream[T], key func(T) K) Stream[T] {
+
+	set := fu.Set[K]{}
+
+	return Filter(stream, func(x T) bool {
+		by := key(x)
+		if set.Contains(by) {
+			return false
+		}
+		set.Add(by)
+		return true
+	})
+}
+
 func MatchFirst[T comparable](stream Stream[T], values ...T) (bool, Stream[T]) {
 
 	var found T
