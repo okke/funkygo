@@ -184,18 +184,14 @@ func MatchFirst[T comparable](stream Stream[T], values ...T) (bool, Stream[T]) {
 	return true, next
 }
 
-func Map[I, O any](stream Stream[I], mapper func(I) (O, error)) Stream[O] {
+func Map[I, O any](stream Stream[I], mapper func(I) O) Stream[O] {
 
 	return func() (O, Stream[O]) {
 		value, next := stream()
 		if next == nil {
 			return fu.Zero[O](), nil
 		}
-		if mapped, err := mapper(value); err != nil {
-			return fu.Zero[O](), nil
-		} else {
-			return mapped, Map(next, mapper)
-		}
+		return mapper(value), Map(next, mapper)
 	}
 }
 
@@ -272,8 +268,8 @@ func ToPointers[T any](stream Stream[T]) Stream[*T] {
 			return nil, nil
 		}
 	}
-	return Map(stream, func(x T) (*T, error) {
-		return &x, nil
+	return Map(stream, func(x T) *T {
+		return &x
 	})
 }
 
@@ -297,8 +293,8 @@ func TwoStreams[T any](stream1 Stream[T], stream2 Stream[T]) Stream[T] {
 func Sequence[T any](streams ...Stream[T]) Stream[T] {
 
 	streamOfStreams := Map(Filter(FromSlice(streams), func(x Stream[T]) bool { return x != nil }),
-		func(s Stream[T]) (Stream[*T], error) {
-			return ToPointers(s), nil
+		func(s Stream[T]) Stream[*T] {
+			return ToPointers(s)
 		})
 
 	if streamOfStreams == nil {
@@ -309,8 +305,8 @@ func Sequence[T any](streams ...Stream[T]) Stream[T] {
 
 	return Map(Filter(sequenceOfPointerStreams(current, streamOfStreams), func(x *T) bool {
 		return x != nil
-	}), func(x *T) (T, error) {
-		return *x, nil
+	}), func(x *T) T {
+		return *x
 	})
 }
 
@@ -334,11 +330,11 @@ func sequenceOfPointerStreams[T any](current Stream[*T], streamOfStreams Stream[
 }
 
 func Append[T any](stream Stream[T], values ...T) Stream[T] {
-	return Sequence(stream, FromSlice(values))
+	return TwoStreams(stream, FromSlice(values))
 }
 
 func Prepend[T any](stream Stream[T], values ...T) Stream[T] {
-	return Sequence(FromSlice(values), stream)
+	return TwoStreams(FromSlice(values), stream)
 }
 
 func ChopN[T any](stream Stream[T], amount int) Stream[[]T] {

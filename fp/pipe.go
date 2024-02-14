@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+
 	"github.com/okke/funkygo/fs"
 	"github.com/okke/funkygo/fu"
-	"reflect"
 )
 
 type Transformer[I any, O any] func(context.Context, I) (O, error)
@@ -59,9 +60,11 @@ func Pipe[I any, O any](ctx context.Context, initial I, steps ...Transformer[any
 
 func Demux[I any, O any](ctx context.Context, initial I, steps ...Transformer[any, any]) (fs.Stream[O], error) {
 
-	return fs.Map(fs.FromSlice(steps), func(t Transformer[any, any]) (O, error) {
-		result, err := t(ctx, initial)
-		return result.(O), err
+	return fs.Map(fs.FromSlice(steps), func(t Transformer[any, any]) O {
+		// TODO use ValueOrError
+		//
+		result, _ := t(ctx, initial)
+		return result.(O)
 	}), nil
 }
 
@@ -182,8 +185,8 @@ func createTransformerWithArguments[I, O any](f any) TransformerWithArguments[I,
 			return fu.Zero[O](), errors.New("transformer is not a function")
 		}
 
-		args := fs.ToSlice(fs.Map(fs.FromSlice(arguments), func(argValue any) (reflect.Value, error) {
-			return reflect.ValueOf(argValue), nil
+		args := fs.ToSlice(fs.Map(fs.FromSlice(arguments), func(argValue any) reflect.Value {
+			return reflect.ValueOf(argValue)
 		}))
 
 		allArgs := append([]reflect.Value{reflect.ValueOf(i)}, args...)

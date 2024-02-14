@@ -314,8 +314,8 @@ func TestDistinctBy(t *testing.T) {
 
 func TestMap(t *testing.T) {
 
-	stream := Map(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) (int, error) {
-		return x * 2, nil
+	stream := Map(FromSlice([]int{1, 2, 3, 4, 5}), func(x int) int {
+		return x * 2
 	})
 
 	set := ToSet(stream)
@@ -499,8 +499,8 @@ func TestChopN(t *testing.T) {
 		t.Errorf("Expected 4, got %d", count)
 	}
 
-	chopLengths := ToSlice(Map(ChopN(FromSlice(slice), 3), func(x []int) (int, error) {
-		return len(x), nil
+	chopLengths := ToSlice(Map(ChopN(FromSlice(slice), 3), func(x []int) int {
+		return len(x)
 	}))
 
 	if !reflect.DeepEqual(chopLengths, []int{3, 3, 3, 1}) {
