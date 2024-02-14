@@ -39,6 +39,15 @@ func Try[T any](f CanError[T]) ValueOrError[T] {
 	}
 }
 
+func (v ValueOrError[T]) DidSucceed() bool {
+	_, _, leftOrRight := v()
+	return leftOrRight == IsLeft
+}
+
+func (v ValueOrError[T]) DidFail() bool {
+	return !v.DidSucceed()
+}
+
 func (v ValueOrError[T]) OnSuccess(f func(T)) ValueOrError[T] {
 	actual, _, leftOrRight := v()
 	if leftOrRight == IsLeft {

@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -530,6 +531,31 @@ func TestChop(t *testing.T) {
 		t.Errorf("Expected %v, got %v", []int{30, 31, 32}, chop)
 	}
 
+}
+
+func TestCatchAll(t *testing.T) {
+
+	errCount := 0
+	stream := CatchAll(Map(FromArgs(1, 2, 3, 4, 5, 6), func(x int) fu.ValueOrError[int] {
+		return fu.Try(func() (int, error) {
+			if x%2 == 0 {
+				return x, nil
+			}
+			return 0, errors.New("don't like odd numbers")
+		})
+	}), func(err error) {
+		errCount++
+	})
+
+	slice := ToSlice(stream)
+
+	if errCount != 3 {
+		t.Errorf("Expected 3, got %d", errCount)
+	}
+
+	if !reflect.DeepEqual(slice, []int{2, 4, 6}) {
+		t.Errorf("Expected %v, got %v", []int{2, 4, 6}, slice)
+	}
 }
 
 // ------------------------------------

@@ -73,6 +73,24 @@ func TestTryAndReturn(t *testing.T) {
 	}
 }
 
+func TestDidSucceed(t *testing.T) {
+
+	if !Try(func() (string, error) {
+		return "soup", nil
+	}).DidSucceed() {
+		t.Error("Expected true")
+	}
+}
+
+func TestDidFail(t *testing.T) {
+
+	if !Try(func() (string, error) {
+		return "", errors.New("soup")
+	}).DidFail() {
+		t.Error("Expected true")
+	}
+}
+
 type testStructForOptional struct {
 	value string
 }

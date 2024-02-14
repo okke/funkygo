@@ -391,3 +391,22 @@ func ToSet[T comparable](stream Stream[T]) fu.Set[T] {
 
 	return set
 }
+
+func CatchAll[T any](stream Stream[fu.ValueOrError[T]], handlers ...func(error)) Stream[T] {
+	return Map(
+		Filter(stream, func(x fu.ValueOrError[T]) bool {
+			_, err := x.Return()
+			if x.DidSucceed() {
+				return true
+			}
+
+			for _, handler := range handlers {
+				handler(err)
+			}
+
+			return false
+		}), func(x fu.ValueOrError[T]) T {
+			value, _ := x.Return()
+			return value
+		})
+}
