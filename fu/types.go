@@ -7,7 +7,7 @@ const (
 	IsRight LeftOrRight = true
 )
 
-type CanError[T any] func() (T, error)
+type CanFail[T any] func() (T, error)
 type Either[L, R any] func() (L, R, LeftOrRight)
 type ValueOrError[T any] Either[T, error]
 type OptionalValue[T any] func() (*T, bool)
@@ -31,7 +31,7 @@ func valueOrError[T any](v Either[T, error]) ValueOrError[T] {
 	}
 }
 
-func Try[T any](f CanError[T]) ValueOrError[T] {
+func Try[T any](f CanFail[T]) ValueOrError[T] {
 	if result, err := f(); err != nil {
 		return valueOrError(Right[T, error](err))
 	} else {
