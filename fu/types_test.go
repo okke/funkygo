@@ -151,3 +151,14 @@ func TestOptionalExists(t *testing.T) {
 		t.Error("Expected noString to be false")
 	}
 }
+
+func TestOptionalWhenNil(t *testing.T) {
+
+	noString := Optional[string](nil)
+
+	noString.WhenNil(Ptr("sauce")).Do(func(s *string) {
+		if *s != "sauce" {
+			t.Errorf("Expected sauce, got %s", *s)
+		}
+	})
+}

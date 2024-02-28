@@ -87,6 +87,14 @@ func (o OptionalValue[T]) Exists() bool {
 	return exists
 }
 
+func (o OptionalValue[T]) WhenNil(get func() *T) OptionalValue[T] {
+	if _, exists := o(); exists {
+		return o
+	} else {
+		return Optional(get())
+	}
+}
+
 func (o OptionalValue[T]) Do(with func(*T)) {
 
 	if actual, exists := o(); exists {
