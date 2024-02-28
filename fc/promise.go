@@ -1,9 +1,5 @@
 package fc
 
-import (
-	"github.com/okke/funkygo/fu"
-)
-
 type Promised[T any] func() T
 
 func Promise[T any](f func() T) Promised[T] {
@@ -13,14 +9,5 @@ func Promise[T any](f func() T) Promised[T] {
 		promised <- result
 	}()
 
-	synchronize := NewMutex()
-	result := fu.Optional[T](nil)
-
-	return func() T {
-		synchronize(func() {
-			result = result.WhenNil(TakePtr(promised))
-		})
-		sure, _ := result()
-		return *sure
-	}
+	return Memoize(TakePtr(promised))
 }
